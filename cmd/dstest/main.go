@@ -10,6 +10,8 @@ import (
 )
 
 func main() {
+
+	// ------ DO NOT CHANGE -------
 	fmt.Println("Starting dstest")
 	// Read config
 	cfg, err := config.Read()
@@ -17,10 +19,13 @@ func main() {
 		log.Fatal(err.Error())
 	}
 
+	// -----------------------------
+
 	fmt.Println("Name: " + cfg.TestConfig.Name)
 
 	output := ""
 
+	// Spawn goroutine
 	go process.RunReplicaWorker(*cfg.ProcessConfig, &output)
 
 	time.Sleep(1 * time.Second)
