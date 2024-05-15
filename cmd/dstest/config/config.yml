@@ -1,0 +1,16 @@
+TestConfig:
+  Name: test
+  Experiments: 10
+  Iterations: 10000
+SchedulerConfig:
+  Type: random
+  Steps: 100
+  Seed: 42
+  Params: {} 
+NetworkConfig:
+  BaseReplicaPort: 6000
+  BaseInterceptorPort: 10000
+ProcessConfig:
+  NumReplicas: 3
+  ReplicaScript: /Users/berkay/Documents/Research/dstest/scripts/replica.sh
+  ClientScripts: [ client.sh ]
