@@ -1,1 +1,1 @@
-python3 hello.py
+python3 /Users/berkay/Documents/Research/dstest/hello.py

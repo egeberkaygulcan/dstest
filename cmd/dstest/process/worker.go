@@ -2,31 +2,45 @@ package process
 
 import (
 	"fmt"
+	"log"
+	"os"
 	"os/exec"
-
-	"github.com/egeberkaygulcan/dstest/cmd/dstest/config"
 )
 
-// type ProcessType int
+type ProcessType int
 
-// const (
-// 	Replica ProcessType = 0
-// 	Client	ProcessType = 1
-// )
+const (
+	Replica ProcessType = 0
+	Client	ProcessType = 1
+)
 
-func RunReplicaWorker(config config.ProcessConfig, output *string) {
-	fmt.Println("Replica sript: " + config.ReplicaScript)
-	cmd := exec.Command("/bin/sh", config.ReplicaScript)
-	// cmd := exec.Command("echo", "hello!")
+type Worker struct{
+	RunScript string
+	WorkerId int
+	Type ProcessType
+	StdOut *string
+	Log *log.Logger
+}
+
+func (worker *Worker) Init(config map[string]any) {
+	worker.RunScript = config["runScript"].(string)
+	worker.WorkerId = config["workerId"].(int)
+	worker.Type = config["type"].(ProcessType)
+	worker.StdOut = new(string)
+	worker.Log = log.New(os.Stdout, fmt.Sprintf("[Worker %d] ", worker.WorkerId), log.LstdFlags)
+}
+
+func (worker *Worker) RunWorker() {
+	worker.Log.Println("Run sript: " + worker.RunScript)
+	cmd := exec.Command("/bin/sh", worker.RunScript)
+
 	out, err := cmd.Output()
 
     if err != nil {
-    	fmt.Printf("error %s", err)
+    	worker.Log.Printf("error %s, out %s\n", err, string(out))
     }
  
-    *output = string(out)
-}
+	worker.Log.Println("Output: " + string(out))
 
-func RunClientWorker() {
-
+    *worker.StdOut = string(out)
 }

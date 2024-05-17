@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"log"
-	"time"
 
 	"github.com/egeberkaygulcan/dstest/cmd/dstest/config"
 	"github.com/egeberkaygulcan/dstest/cmd/dstest/process"
@@ -23,13 +22,10 @@ func main() {
 
 	fmt.Println("Name: " + cfg.TestConfig.Name)
 
-	output := ""
-
 	// Spawn goroutine
-	go process.RunReplicaWorker(*cfg.ProcessConfig, &output)
-
-	time.Sleep(1 * time.Second)
-	fmt.Println("Output: " + output)
+	pm := new(process.ProcessManager)
+	pm.Init(cfg)
+	pm.Run()
 	// out, err := process.RunReplicaWorker(*cfg.ProcessConfig)
 
 	// if err != nil {
