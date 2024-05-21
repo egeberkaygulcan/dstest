@@ -1,17 +1,15 @@
 package process
 
 import (
-	"time"
-	"log"
-
 	"github.com/egeberkaygulcan/dstest/cmd/dstest/config"
+	"log"
 )
 
 type ProcessManager struct {
-	Config *config.Config
-	Workers []*Worker
+	Config    *config.Config
+	Workers   []*Worker
 	IdCounter int
-	Log *log.Logger
+	Log       *log.Logger
 }
 
 func (pm *ProcessManager) getWorkerId() int {
@@ -54,6 +52,6 @@ func (pm *ProcessManager) Run() {
 	}
 
 	// Wait for process fault injections
-	
+
 	// Inject when requested
 }
