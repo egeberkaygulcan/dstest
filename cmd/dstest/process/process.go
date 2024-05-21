@@ -53,8 +53,6 @@ func (pm *ProcessManager) Run() {
 		go pm.Workers[i].RunWorker()
 	}
 
-	time.Sleep(1 * time.Second)
-
 	// Wait for process fault injections
 	
 	// Inject when requested
