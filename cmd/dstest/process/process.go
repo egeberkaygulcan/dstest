@@ -39,6 +39,8 @@ func (pm *ProcessManager) generateReplicaWorkerConfig() []map[string]any {
 		conf["runScript"] = pm.Config.ProcessConfig.ReplicaScript
 		conf["workerId"] = pm.getWorkerId()
 		conf["type"] = Replica
+		conf["baseInterceptorPort"] = pm.Config.NetworkConfig.BaseInterceptorPort
+		conf["numReplicas"] = pm.Config.ProcessConfig.NumReplicas
 		config = append(config, conf)
 	}
 
