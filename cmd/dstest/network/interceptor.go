@@ -67,4 +67,29 @@ func (ni *Interceptor) Run() {
 
 func (ni *Interceptor) handleConnection(conn net.Conn) {
 	ni.Log.Printf("Handling connection from %s\n", conn.RemoteAddr().String())
+
+	ni.Log.Printf("conn:" + conn.LocalAddr().String())
+
+	// echo back the message
+	buf := make([]byte, 1024)
+	n, err := conn.Read(buf)
+	if err != nil {
+		ni.Log.Fatalf("Error reading from connection: %s\n", err.Error())
+	}
+
+	ni.Log.Printf("Received message: %s\n", string(buf[:n]))
+
+	_, err = conn.Write(buf[:n])
+	if err != nil {
+		ni.Log.Fatalf("Error writing to connection: %s\n", err.Error())
+	}
+
+	ni.Log.Printf("Sent message: %s\n", string(buf[:n]))
+
+	err = conn.Close()
+	if err != nil {
+		ni.Log.Fatalf("Error closing connection: %s\n", err.Error())
+	}
+
+	ni.Log.Printf("Connection closed\n")
 }
