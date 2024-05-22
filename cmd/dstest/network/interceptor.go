@@ -79,6 +79,9 @@ func (ni *Interceptor) handleConnection(conn net.Conn) {
 		ni.Log.Fatalf("Error reading from connection: %s\n", err.Error())
 	}
 
+	ni.Log.Printf("Received message: %s\n", string(buf[:n]))
+
+	// Push the message to the receiver's message queue
 	message := Message{
 		Sender:   conn.RemoteAddr().(*net.TCPAddr).Port - ni.NetworkManager.Config.NetworkConfig.BaseReplicaPort,
 		Receiver: ni.ID,
@@ -87,19 +90,19 @@ func (ni *Interceptor) handleConnection(conn net.Conn) {
 	ni.MessageQueue.PushBack(message)
 	ni.MessageQueue.Print(ni.Log)
 
-	ni.Log.Printf("Received message: %s\n", string(buf[:n]))
-
-	_, err = conn.Write(buf[:n])
-	if err != nil {
-		ni.Log.Fatalf("Error writing to connection: %s\n", err.Error())
-	}
-
-	ni.Log.Printf("Sent message: %s\n", string(buf[:n]))
+	/*
+		// Send the message back to the sender
+		_, err = conn.Write(buf[:n])
+		if err != nil {
+			ni.Log.Fatalf("Error writing to connection: %s\n", err.Error())
+		}
+		ni.Log.Printf("Sent message: %s\n", string(buf[:n]))
+	*/
 
 	err = conn.Close()
 	if err != nil {
 		ni.Log.Fatalf("Error closing connection: %s\n", err.Error())
 	}
 
-	ni.Log.Printf("Connection closed\n")
+	//ni.Log.Printf("Connection closed\n")
 }
