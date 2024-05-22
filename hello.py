@@ -14,8 +14,7 @@ print("Worker ID: " + str(workerId) +
 
 # send 2 tcp requests to random interceptors and then exit
 time.sleep(workerId)
-n = 2
-while True:
+for i in range(2):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         s.bind(("127.0.0.1", workerBindPort))
@@ -23,10 +22,7 @@ while True:
         print("Worker " + str(workerId) + " sending request to port: " + str(randomPort))
         s.connect(('127.0.0.1', randomPort))
         s.sendall(b'Hello, world')
-        data = s.recvmsg(1024)
-        print('Worker ' + str(workerId) + ' received', repr(data))
+        #data = s.recvmsg(1024)
+        #print('Worker ' + str(workerId) + ' received', repr(data))
         s.close()
-        n -= 1
-        if n == 0:
-            break
         time.sleep(numReplicas)

@@ -10,6 +10,7 @@ type Interceptor struct {
 	isInitialized  bool
 	Log            *log.Logger
 	NetworkManager *Manager
+	MessageQueue   *MessageQueue
 	Port           int
 	ID             int
 }
@@ -18,8 +19,9 @@ func (ni *Interceptor) Init(id int, port int, nm *Manager) {
 	ni.ID = id
 	ni.Port = port
 	ni.NetworkManager = nm
-	logHeader := fmt.Sprintf("[Interceptor %d] ", id)
-	ni.Log = log.New(log.Writer(), logHeader, log.LstdFlags)
+	ni.MessageQueue = nm.MessageQueues[id]
+	logPrefix := fmt.Sprintf("[Interceptor %d] ", id)
+	ni.Log = log.New(log.Writer(), logPrefix, log.LstdFlags)
 	ni.isInitialized = true
 }
 
@@ -71,11 +73,19 @@ func (ni *Interceptor) handleConnection(conn net.Conn) {
 	ni.Log.Printf("conn:" + conn.LocalAddr().String())
 
 	// echo back the message
-	buf := make([]byte, 1024)
+	buf := make([]byte, 1024*1024)
 	n, err := conn.Read(buf)
 	if err != nil {
 		ni.Log.Fatalf("Error reading from connection: %s\n", err.Error())
 	}
+
+	message := Message{
+		Sender:   conn.RemoteAddr().(*net.TCPAddr).Port - ni.NetworkManager.Config.NetworkConfig.BaseReplicaPort,
+		Receiver: ni.ID,
+		Payload:  buf[:n],
+	}
+	ni.MessageQueue.PushBack(message)
+	ni.MessageQueue.Print(ni.Log)
 
 	ni.Log.Printf("Received message: %s\n", string(buf[:n]))
 
