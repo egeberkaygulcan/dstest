@@ -27,7 +27,6 @@ func main() {
 	// Spawn goroutine
 	pm := new(process.ProcessManager)
 	pm.Init(cfg)
-	go pm.Run()
 	// out, err := process.RunReplicaWorker(*cfg.ProcessConfig)
 
 	// if err != nil {
@@ -40,15 +39,16 @@ func main() {
 	// Init network
 	nm := new(network.Manager)
 	nm.Init(cfg)
-	go nm.Run()
 
 	// Init processes
 
 	// Run network
+	go nm.Run()
 
 	// Run scheduler
 
 	// Spawn processes
+	go pm.Run()
 
 	// Later wrap this process around an experiment module
 
