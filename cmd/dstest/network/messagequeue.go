@@ -2,7 +2,6 @@ package network
 
 import (
 	"container/list"
-	"fmt"
 	"log"
 )
 
@@ -30,7 +29,6 @@ func (mq *MessageQueue) Init() {
 
 // PushBack adds a message to the back of the queue
 func (mq *MessageQueue) PushBack(m Message) {
-	fmt.Printf("Sender: %d, Receiver: %d, Payload: %s\n", m.Sender, m.Receiver, m.Payload)
 	mq.List.PushBack(m)
 }
 

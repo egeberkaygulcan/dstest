@@ -10,7 +10,6 @@ type Interceptor struct {
 	isInitialized  bool
 	Log            *log.Logger
 	NetworkManager *Manager
-	MessageQueue   *MessageQueue
 	Port           int
 	ID             int
 }
@@ -19,7 +18,6 @@ func (ni *Interceptor) Init(id int, port int, nm *Manager) {
 	ni.ID = id
 	ni.Port = port
 	ni.NetworkManager = nm
-	ni.MessageQueue = nm.MessageQueues[id]
 	logPrefix := fmt.Sprintf("[Interceptor %d] ", id)
 	ni.Log = log.New(log.Writer(), logPrefix, log.LstdFlags)
 	ni.isInitialized = true
@@ -33,8 +31,6 @@ func (ni *Interceptor) Run() {
 	}
 
 	// log the port
-	fmt.Printf("Running network interceptor on port %d\n", ni.Port)
-
 	ni.Log.Printf("Running network interceptor on port %d\n", ni.Port)
 
 	// Start listening on the port
@@ -46,6 +42,8 @@ func (ni *Interceptor) Run() {
 		ni.Log.Fatalf("Error listening on port %d: %s\n", ni.Port, err.Error())
 	}
 
+	ni.Log.Printf("Listening on port %d\n", ni.Port)
+
 	// Close the listener when the function returns
 	defer func(listener net.Listener) {
 		err := listener.Close()
@@ -53,8 +51,6 @@ func (ni *Interceptor) Run() {
 			ni.Log.Fatalf("Error closing listener on port %d: %s\n", ni.Port, err.Error())
 		}
 	}(listener)
-
-	ni.Log.Printf("Listening on port %d\n", ni.Port)
 
 	// Accept connections
 	for {
@@ -68,9 +64,7 @@ func (ni *Interceptor) Run() {
 }
 
 func (ni *Interceptor) handleConnection(conn net.Conn) {
-	ni.Log.Printf("Handling connection from %s\n", conn.RemoteAddr().String())
-
-	ni.Log.Printf("conn:" + conn.LocalAddr().String())
+	//ni.Log.Printf("Handling connection from %s\n", conn.RemoteAddr().String())
 
 	// echo back the message
 	buf := make([]byte, 1024*1024)
@@ -79,16 +73,14 @@ func (ni *Interceptor) handleConnection(conn net.Conn) {
 		ni.Log.Fatalf("Error reading from connection: %s\n", err.Error())
 	}
 
-	ni.Log.Printf("Received message: %s\n", string(buf[:n]))
+	ni.Log.Printf("Received from %s: %s\n", conn.RemoteAddr().String(), string(buf[:n]))
 
 	// Push the message to the receiver's message queue
-	message := Message{
+	ni.NetworkManager.Router.QueueMessage(Message{
 		Sender:   conn.RemoteAddr().(*net.TCPAddr).Port - ni.NetworkManager.Config.NetworkConfig.BaseReplicaPort,
 		Receiver: ni.ID,
 		Payload:  buf[:n],
-	}
-	ni.MessageQueue.PushBack(message)
-	ni.MessageQueue.Print(ni.Log)
+	})
 
 	/*
 		// Send the message back to the sender
