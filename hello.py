@@ -1,8 +1,4 @@
-print("Hello from worker line 1")
-
 import requests
-
-print("Imported requests!")
 import socket
 import sys
 import time
@@ -63,5 +59,3 @@ for i in range(2):
     print("Worker " + str(workerId) + " sending request to path: " + path)
     s.get(path)
 s.close()
-print("Worker " + str(workerId) + " done")
-
