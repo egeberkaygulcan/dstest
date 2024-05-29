@@ -1,12 +1,16 @@
 package network
 
 import (
-	"fmt"
+	"errors"
 	"log"
-	"net"
 )
 
-type Interceptor struct {
+type Interceptor interface {
+	Init(id int, port int, nm *Manager)
+	Run() (err error)
+}
+
+type BaseInterceptor struct {
 	isInitialized  bool
 	Log            *log.Logger
 	NetworkManager *Manager
@@ -14,87 +18,19 @@ type Interceptor struct {
 	ID             int
 }
 
-func (ni *Interceptor) Init(id int, port int, nm *Manager) {
+func (ni *BaseInterceptor) Init(id int, port int, nm *Manager, log *log.Logger) {
 	ni.ID = id
 	ni.Port = port
 	ni.NetworkManager = nm
-	logPrefix := fmt.Sprintf("[Interceptor %d] ", id)
-	ni.Log = log.New(log.Writer(), logPrefix, log.LstdFlags)
+	ni.Log = log
 	ni.isInitialized = true
 }
 
-func (ni *Interceptor) Run() {
+func (ni *BaseInterceptor) Run() (err error) {
 	// check if the interceptor is initialized
 	if !ni.isInitialized {
-		ni.Log.Fatalf("Interceptor is not initialized\n")
-		return
+		return errors.New("Interceptor is not initialized")
 	}
 
-	// log the port
-	ni.Log.Printf("Running network interceptor on port %d\n", ni.Port)
-
-	// Start listening on the port
-	portSpecification := fmt.Sprintf(":%d", ni.Port)
-	listener, err := net.Listen("tcp", portSpecification)
-
-	// Check for errors
-	if err != nil {
-		ni.Log.Fatalf("Error listening on port %d: %s\n", ni.Port, err.Error())
-	}
-
-	ni.Log.Printf("Listening on port %d\n", ni.Port)
-
-	// Close the listener when the function returns
-	defer func(listener net.Listener) {
-		err := listener.Close()
-		if err != nil {
-			ni.Log.Fatalf("Error closing listener on port %d: %s\n", ni.Port, err.Error())
-		}
-	}(listener)
-
-	// Accept connections
-	for {
-		conn, err := listener.Accept()
-		if err != nil {
-			ni.Log.Fatalf("Error accepting connection on port %d: %s\n", ni.Port, err.Error())
-		}
-
-		go ni.handleConnection(conn)
-	}
-}
-
-func (ni *Interceptor) handleConnection(conn net.Conn) {
-	//ni.Log.Printf("Handling connection from %s\n", conn.RemoteAddr().String())
-
-	// echo back the message
-	buf := make([]byte, 1024*1024)
-	n, err := conn.Read(buf)
-	if err != nil {
-		ni.Log.Fatalf("Error reading from connection: %s\n", err.Error())
-	}
-
-	ni.Log.Printf("Received from %s: %s\n", conn.RemoteAddr().String(), string(buf[:n]))
-
-	// Push the message to the receiver's message queue
-	ni.NetworkManager.Router.QueueMessage(Message{
-		Sender:   conn.RemoteAddr().(*net.TCPAddr).Port - ni.NetworkManager.Config.NetworkConfig.BaseReplicaPort,
-		Receiver: ni.ID,
-		Payload:  buf[:n],
-	})
-
-	/*
-		// Send the message back to the sender
-		_, err = conn.Write(buf[:n])
-		if err != nil {
-			ni.Log.Fatalf("Error writing to connection: %s\n", err.Error())
-		}
-		ni.Log.Printf("Sent message: %s\n", string(buf[:n]))
-	*/
-
-	err = conn.Close()
-	if err != nil {
-		ni.Log.Fatalf("Error closing connection: %s\n", err.Error())
-	}
-
-	//ni.Log.Printf("Connection closed\n")
+	return nil
 }

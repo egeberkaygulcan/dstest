@@ -9,7 +9,7 @@ type Manager struct {
 	Config        *config.Config
 	Log           *log.Logger
 	Router        *Router
-	Interceptors  []*Interceptor
+	Interceptors  []Interceptor
 	MessageQueues []*MessageQueue
 }
 
@@ -18,7 +18,7 @@ func (nm *Manager) Init(config *config.Config) {
 
 	nm.Config = config
 	nm.Router = new(Router)
-	nm.Interceptors = make([]*Interceptor, numReplicas)
+	nm.Interceptors = make([]Interceptor, numReplicas)
 	nm.MessageQueues = make([]*MessageQueue, numReplicas)
 
 	nm.Router.Init(nm, numReplicas)
@@ -26,7 +26,7 @@ func (nm *Manager) Init(config *config.Config) {
 	// create the interceptors and message queues
 	for i := 0; i < numReplicas; i++ {
 		nm.MessageQueues[i] = new(MessageQueue)
-		nm.Interceptors[i] = new(Interceptor)
+		nm.Interceptors[i] = new(HttpInterceptor)
 		nm.MessageQueues[i].Init()
 		nm.Interceptors[i].Init(i, nm.Config.NetworkConfig.BaseInterceptorPort+i, nm)
 	}
@@ -34,7 +34,6 @@ func (nm *Manager) Init(config *config.Config) {
 	// FIXME: This is a temporary solution to avoid nil pointer dereference
 	nm.Log = log.New(log.Writer(), "[NetworkManager] ", log.LstdFlags)
 
-	//nm.Log.Printf("Config: %+v\n", config.NetworkConfig)
 	nm.Log.Println("Network manager initialized")
 }
 
