@@ -40,7 +40,15 @@ func (r *Router) QueueMessage(m Message) {
 	}
 }
 
+// check if there is connectivity between two nodes
+// returns true if there is connectivity, false otherwise
+// if from or to is invalid, it logs an error and returns true
+// this is to avoid dropping messages when there is an error in the test
 func (r *Router) HasConnectivity(from int, to int) bool {
+	if (from < 0 || from >= len(r.RoutingTable)) || (to < 0 || to >= len(r.RoutingTable)) {
+		r.Log.Fatalf("Invalid node ID\n")
+		return true
+	}
 	return r.RoutingTable[from][to]
 }
 
