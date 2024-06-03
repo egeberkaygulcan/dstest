@@ -32,7 +32,7 @@ class SourcePortAdapter(HTTPAdapter):
 
 # TCP client
 # send 2 tcp requests to random interceptors and then exit
-'''
+
 time.sleep(workerId)
 for i in range(2):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -59,3 +59,4 @@ for i in range(2):
     print("Worker " + str(workerId) + " sending request to path: " + path)
     s.get(path)
 s.close()
+'''
