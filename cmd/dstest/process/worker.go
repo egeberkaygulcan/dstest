@@ -14,7 +14,7 @@ type ProcessType int
 
 const (
 	Replica ProcessType = 0
-	Client	ProcessType = 1
+	Client  ProcessType = 1
 )
 
 type ProcessStatus int
@@ -30,6 +30,8 @@ const (
 
 type Worker struct{
 	RunScript 	  string
+	NumReplicas         int
+	BaseInterceptorPort int
 	ClientScripts []string
 	CleanScript	  string
 	WorkerId 	  int
@@ -52,6 +54,8 @@ func (worker *Worker) Init(config map[string]any) {
 	worker.ClientScripts = config["clientScripts"].([]string)
 	worker.CleanScript = config["cleanScript"].(string)
 	worker.WorkerId = config["workerId"].(int)
+	worker.NumReplicas = config["numReplicas"].(int)
+	worker.BaseInterceptorPort = config["baseInterceptorPort"].(int)
 	worker.Type = config["type"].(ProcessType)
 	worker.Params = config["params"].(string)
 	worker.Timeout = config["timeout"].(int)
@@ -93,7 +97,6 @@ func (worker *Worker) RunWorker() {
 	go func() {
 		errch <- worker.Cmd.Wait()
 	} ()
-
 	
 
 	select {

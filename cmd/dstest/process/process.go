@@ -1,13 +1,13 @@
 package process
 
 import (
-	"fmt"
+  "fmt"
 	"log"
 	"os"
 	"path/filepath"
 	"sync"
-
 	"github.com/egeberkaygulcan/dstest/cmd/dstest/config"
+	"log"
 )
 
 type ProcessManager struct {
@@ -58,6 +58,8 @@ func (pm *ProcessManager) generateReplicaWorkerConfig() []map[string]any {
 		conf["clientScripts"] = pm.Config.ProcessConfig.ClientScripts
 		conf["workerId"] = pm.getWorkerId()
 		conf["type"] = Replica
+		conf["baseInterceptorPort"] = pm.Config.NetworkConfig.BaseInterceptorPort
+		conf["numReplicas"] = pm.Config.ProcessConfig.NumReplicas
 		conf["params"] = pm.Config.ProcessConfig.ReplicaParams[i]
 		conf["timeout"] = pm.Config.ProcessConfig.Timeout
 		// TODO - Output file create
@@ -149,4 +151,3 @@ func (pm *ProcessManager) RunClient() {
 	// Initialize client
 
 	// Call client worker as goroutine
-}
