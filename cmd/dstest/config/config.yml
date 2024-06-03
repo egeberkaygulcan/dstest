@@ -13,11 +13,11 @@ NetworkConfig:
 ProcessConfig:
   NumReplicas: 3
   Timeout: 300
-  OutputDir: /Users/berkay/Documents/Research/dstest/output
-  ReplicaScript: /Users/berkay/Documents/Research/dstest/scripts/ratis_server.sh
+  OutputDir: ./output
+  ReplicaScript: ./scripts/ratis_server.sh
   ClientScripts: [ client.sh ]
-  CleanScript: /Users/berkay/Documents/Research/dstest/scripts/ratis_clean.sh
   ReplicaParams: 
+  CleanScript: ./scripts/ratis_clean.sh
     - "6000 10001 10002 n0"
     - "10000 6001 10002 n1"
     - "10000 10001 6002 n2"
