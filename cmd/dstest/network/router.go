@@ -46,7 +46,7 @@ func (r *Router) QueueMessage(m Message) {
 // this is to avoid dropping messages when there is an error in the test
 func (r *Router) HasConnectivity(from int, to int) bool {
 	if (from < 0 || from >= len(r.RoutingTable)) || (to < 0 || to >= len(r.RoutingTable)) {
-		r.Log.Fatalf("Invalid node ID\n")
+		r.Log.Println(fmt.Sprintf("Invalid node IDs: from %d to %d", from, to))
 		return true
 	}
 	return r.RoutingTable[from][to]
