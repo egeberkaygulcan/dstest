@@ -14,7 +14,7 @@ type TCPInterceptor struct {
 var _ Interceptor = (*TCPInterceptor)(nil)
 
 func (ni *TCPInterceptor) Init(id int, port int, nm *Manager) {
-	logPrefix := fmt.Sprintf("[HTTP Interceptor %d] ", id)
+	logPrefix := fmt.Sprintf("[TCP Interceptor %d] ", id)
 	logger := log.New(log.Writer(), logPrefix, log.LstdFlags)
 	ni.BaseInterceptor.Init(id, port, nm, logger)
 }

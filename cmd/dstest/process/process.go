@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"sync"
 	"github.com/egeberkaygulcan/dstest/cmd/dstest/config"
-	"log"
 )
 
 type ProcessManager struct {
@@ -151,3 +150,4 @@ func (pm *ProcessManager) RunClient() {
 	// Initialize client
 
 	// Call client worker as goroutine
+}

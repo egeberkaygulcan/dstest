@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"strings"
 	"syscall"
 	"time"
 )
@@ -71,11 +72,11 @@ func (worker *Worker) Init(config map[string]any) {
 }
 
 func (worker *Worker) RunWorker() {
-	defer worker.clean()
+	// defer worker.clean()
 
 	worker.Log.Println("Running worker with: " + worker.RunScript + " " + worker.Params)
 	// worker.Cmd = exec.CommandContext(worker.Context, "/bin/sh", worker.RunScript)
-	worker.Cmd = exec.Command("/bin/sh", worker.RunScript, worker.Params)
+	worker.Cmd = exec.Command("/bin/sh", strings.Fields(worker.RunScript + " " + worker.Params)...)
 	worker.Cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 
 	// TODO - Pass the stdout/stderr files
