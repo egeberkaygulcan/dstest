@@ -31,8 +31,12 @@ type NetworkConfig struct {
 
 type ProcessConfig struct {
 	NumReplicas   int
+	Timeout 	  int
+	OutputDir	  string
 	ReplicaScript string
 	ClientScripts []string
+	CleanScript	  string
+	ReplicaParams []string
 }
 
 type Config struct {

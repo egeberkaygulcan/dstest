@@ -26,7 +26,7 @@ func main() {
 
 	// Spawn goroutine
 	pm := new(process.ProcessManager)
-	pm.Init(cfg)
+  pm.Init(cfg, 0)
 	// out, err := process.RunReplicaWorker(*cfg.ProcessConfig)
 
 	// if err != nil {

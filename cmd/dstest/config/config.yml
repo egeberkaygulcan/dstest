@@ -1,8 +1,8 @@
 TestConfig:
-  Name: test
+  Name: ratis-test
   Experiments: 10
   Iterations: 10000
-SchedulerConfig:
+SchedulerConfig: #TODO - Seperate the scheduler param
   Type: random
   Steps: 100
   Seed: 42
@@ -12,5 +12,12 @@ NetworkConfig:
   BaseInterceptorPort: 10000
 ProcessConfig:
   NumReplicas: 3
-  ReplicaScript: /Users/berkay/Documents/Research/dstest/scripts/replica.sh
+  Timeout: 10
+  OutputDir: /Users/berkay/Documents/Research/dstest/output
+  ReplicaScript: /Users/berkay/Documents/Research/dstest/scripts/ratis_server.sh
   ClientScripts: [ client.sh ]
+  CleanScript: /Users/berkay/Documents/Research/dstest/scripts/ratis_clean.sh
+  ReplicaParams: 
+    - "n0"
+    - "n1"
+    - "n2"
