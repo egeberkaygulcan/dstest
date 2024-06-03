@@ -1,17 +1,23 @@
 package process
 
 import (
-	"time"
+	"fmt"
 	"log"
+	"os"
+	"path/filepath"
+	"sync"
 
 	"github.com/egeberkaygulcan/dstest/cmd/dstest/config"
 )
 
 type ProcessManager struct {
 	Config *config.Config
-	Workers []*Worker
+	Workers map[int]*Worker
+	Iteration int
 	IdCounter int
 	Log *log.Logger
+	CrashedWorkers map[int]bool
+	WaitGroup *sync.WaitGroup
 }
 
 func (pm *ProcessManager) getWorkerId() int {
@@ -20,8 +26,17 @@ func (pm *ProcessManager) getWorkerId() int {
 	return id
 }
 
-func (pm *ProcessManager) Init(config *config.Config) {
+func (pm *ProcessManager) Init(config *config.Config, iteration int) {
 	pm.Config = config
+	pm.Log = log.New(os.Stdout, "", log.Default().Flags())
+	pm.CrashedWorkers = make(map[int]bool)
+	pm.Workers = make(map[int]*Worker)
+	pm.WaitGroup = new(sync.WaitGroup)
+	pm.Iteration = iteration
+
+	if err := os.MkdirAll(pm.Config.ProcessConfig.OutputDir, os.ModePerm); err != nil {
+        log.Fatalf("Error while creating output folder: %s", err)
+    }
 
 	// Generate worker configurations
 	workerConfig := pm.generateReplicaWorkerConfig()
@@ -30,7 +45,7 @@ func (pm *ProcessManager) Init(config *config.Config) {
 	for i := 0; i < pm.Config.ProcessConfig.NumReplicas; i++ {
 		worker := new(Worker)
 		worker.Init(workerConfig[i])
-		pm.Workers = append(pm.Workers, worker)
+		pm.Workers[(workerConfig[i]["workerId"]).(int)] = worker
 	}
 }
 
@@ -39,8 +54,31 @@ func (pm *ProcessManager) generateReplicaWorkerConfig() []map[string]any {
 	for i := 0; i < pm.Config.ProcessConfig.NumReplicas; i++ {
 		conf := make(map[string]any)
 		conf["runScript"] = pm.Config.ProcessConfig.ReplicaScript
+		conf["cleanScript"] = pm.Config.ProcessConfig.CleanScript
+		conf["clientScripts"] = pm.Config.ProcessConfig.ClientScripts
 		conf["workerId"] = pm.getWorkerId()
 		conf["type"] = Replica
+		conf["params"] = pm.Config.ProcessConfig.ReplicaParams[i]
+		conf["timeout"] = pm.Config.ProcessConfig.Timeout
+		// TODO - Output file create
+		if err := os.MkdirAll(filepath.Join(pm.Config.ProcessConfig.OutputDir, 
+											fmt.Sprintf("%s_%s_%d", 
+														pm.Config.TestConfig.Name, 
+														pm.Config.SchedulerConfig.Type,
+														pm.Iteration)),
+											os.ModePerm); err != nil {
+			log.Fatal(err)
+		}
+
+		// stdout, err := os.OpenFile(fmt.Sprintf("%s_"), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		// if err != nil {
+		// 	log.Fatal(err)
+		// }
+
+		// stderr, err := os.OpenFile("access.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		// if err != nil {
+		// 	log.Fatal(err)
+		// }
 		config = append(config, conf)
 	}
 
@@ -49,13 +87,66 @@ func (pm *ProcessManager) generateReplicaWorkerConfig() []map[string]any {
 
 func (pm *ProcessManager) Run() {
 	// Run processes
-	for i := 0; i < pm.Config.ProcessConfig.NumReplicas; i++ {
-		go pm.Workers[i].RunWorker()
+	for _, worker := range pm.Workers {
+		pm.WaitGroup.Add(1)
+		go func(worker *Worker, wg *sync.WaitGroup) {
+			worker.RunWorker()
+			wg.Done()
+			delete(pm.Workers, worker.WorkerId)
+		} (worker, pm.WaitGroup)
 	}
 
-	time.Sleep(1 * time.Second)
+	pm.WaitGroup.Wait()
 
-	// Wait for process fault injections
-	
-	// Inject when requested
+	for workerId, worker := range pm.Workers {
+		pm.Log.Printf("Worker %d status: %d\n", workerId, worker.Status)
+	}
+}
+
+func (pm *ProcessManager) Reset() {
+	// TODO - Kill workers
+	for _, worker := range pm.Workers {
+		worker.StopWorker()
+	}
+
+	// TODO - Reset properties
+	pm.IdCounter = 0
+
+}
+
+func (pm *ProcessManager) CrashReplica(workerId int) bool {
+	for _, w := range pm.Workers {
+		if w.WorkerId == workerId {
+			w.KillWorker()
+			pm.WaitGroup.Done()
+			pm.CrashedWorkers[workerId] = true
+			return true
+		}
+	}
+
+	return false
+}
+
+func (pm *ProcessManager) RestartReplica(workerId int) bool {
+	for key, _ := range pm.CrashedWorkers {
+		if key == workerId {
+			pm.WaitGroup.Add(1)
+			pm.Workers[key].RestartWorker()
+			// delete(pm.Workers, key)
+			return true
+		}
+	}
+
+	return false
+}
+
+func (pm *ProcessManager) generateClientWorkerConfig() []map[string]any {
+	// TODO
+	return nil
+}
+
+func (pm *ProcessManager) RunClient() {
+	// Initialize client
+
+	// Call client worker as goroutine
 }
