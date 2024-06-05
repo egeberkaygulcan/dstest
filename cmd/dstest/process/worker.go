@@ -2,7 +2,6 @@ package process
 
 import (
 	"fmt"
-	"io"
 	"log"
 	"os"
 	"os/exec"
@@ -45,8 +44,8 @@ type Worker struct{
 	Status		  ProcessStatus
 	Cmd    		  *exec.Cmd
 	// TODO - Change the types
-	Stdout		  io.Writer
-	Stderr		  io.Writer
+	Stdout		  *os.File
+	Stderr		  *os.File
 	Log 		  *log.Logger
 }
 
@@ -63,9 +62,8 @@ func (worker *Worker) Init(config map[string]any) {
 
 	worker.TimeoutTimer = nil
 
-	// TODO - Set the config files
-	worker.Stdout = os.Stdout
-	worker.Stderr = os.Stderr
+	worker.Stdout = config["stdout"].(*os.File)
+	worker.Stderr = config["stderr"].(*os.File)
 
 	worker.Status = Initialized
 	worker.Log = log.New(os.Stdout, fmt.Sprintf("[Worker %d] ", worker.WorkerId), log.LstdFlags)
@@ -79,7 +77,6 @@ func (worker *Worker) RunWorker() {
 	worker.Cmd = exec.Command("/bin/sh", strings.Fields(worker.RunScript + " " + worker.Params)...)
 	worker.Cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 
-	// TODO - Pass the stdout/stderr files
 	worker.Cmd.Stdout = worker.Stdout
 	worker.Cmd.Stderr = worker.Stderr
 

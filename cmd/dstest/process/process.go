@@ -61,25 +61,28 @@ func (pm *ProcessManager) generateReplicaWorkerConfig() []map[string]any {
 		conf["numReplicas"] = pm.Config.ProcessConfig.NumReplicas
 		conf["params"] = pm.Config.ProcessConfig.ReplicaParams[i]
 		conf["timeout"] = pm.Config.ProcessConfig.Timeout
-		// TODO - Output file create
-		if err := os.MkdirAll(filepath.Join(pm.Config.ProcessConfig.OutputDir, 
-											fmt.Sprintf("%s_%s_%d", 
-														pm.Config.TestConfig.Name, 
-														pm.Config.SchedulerConfig.Type,
-														pm.Iteration)),
-											os.ModePerm); err != nil {
+		basedir := filepath.Join(pm.Config.ProcessConfig.OutputDir, 
+								fmt.Sprintf("%s_%s_%d", 
+											pm.Config.TestConfig.Name, 
+											pm.Config.SchedulerConfig.Type,
+											pm.Iteration))
+		if err := os.MkdirAll(basedir, os.ModePerm); err != nil {
 			log.Fatal(err)
 		}
+		conf["basedir"] = basedir 
 
-		// stdout, err := os.OpenFile(fmt.Sprintf("%s_"), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-		// if err != nil {
-		// 	log.Fatal(err)
-		// }
+		stdout, err := os.OpenFile(filepath.Join(basedir, fmt.Sprintf("stdout_%d.log", conf["workerId"])), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		if err != nil {
+			log.Fatal(err)
+		}
+		conf["stdout"] = stdout
 
-		// stderr, err := os.OpenFile("access.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-		// if err != nil {
-		// 	log.Fatal(err)
-		// }
+		stderr, err := os.OpenFile(filepath.Join(basedir, fmt.Sprintf("stderr_%d.log", conf["workerId"])), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		if err != nil {
+			log.Fatal(err)
+		}
+		conf["stderr"] = stderr
+
 		config = append(config, conf)
 	}
 
