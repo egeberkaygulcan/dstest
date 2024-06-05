@@ -6,13 +6,14 @@ import (
 	"time"
 
 	"github.com/egeberkaygulcan/dstest/cmd/dstest/config"
-	"github.com/egeberkaygulcan/dstest/cmd/dstest/network"
+	// "github.com/egeberkaygulcan/dstest/cmd/dstest/network"
 	"github.com/egeberkaygulcan/dstest/cmd/dstest/process"
 )
 
 func main() {
 
 	// ------ DO NOT CHANGE -------
+	
 	fmt.Println("Starting dstest")
 	// Read config
 	cfg, err := config.Read()
@@ -37,13 +38,13 @@ func main() {
 	// Init scheduler
 
 	// Init network
-	nm := new(network.Manager)
-	nm.Init(cfg)
+	// nm := new(network.Manager)
+	// nm.Init(cfg)
 
 	// Init processes
 
 	// Run network
-	go nm.Run()
+	// go nm.Run()
 
 	// Run scheduler
 
@@ -52,5 +53,5 @@ func main() {
 
 	// Later wrap this process around an experiment module
 
-	time.Sleep(10 * time.Second)
+	time.Sleep(60 * time.Second)
 }
