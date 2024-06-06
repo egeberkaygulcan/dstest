@@ -28,6 +28,25 @@ const (
 	Exception	ProcessStatus = 5		
 )
 
+func (s ProcessStatus) String() string {
+    switch s {
+    case Initialized:
+        return "Initialized"
+    case Running:
+        return "Running"
+	case Done:
+		return "Done"
+	case Crashed:
+		return "Crashed"
+	case Timeout:
+		return "Timeout"
+	case Exception:
+		return "Exception"
+    default:
+        return fmt.Sprintf("%d", int(s))
+    }
+}
+
 type Worker struct{
 	RunScript 	  string
 	NumReplicas         int
