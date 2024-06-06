@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
-	"time"
+	"sync"
 
 	"github.com/egeberkaygulcan/dstest/cmd/dstest/config"
 	// "github.com/egeberkaygulcan/dstest/cmd/dstest/network"
@@ -49,9 +49,14 @@ func main() {
 	// Run scheduler
 
 	// Spawn processes
-	go pm.Run()
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		pm.Run()
+		wg.Done()
+	} ()
 
 	// Later wrap this process around an experiment module
 
-	time.Sleep(60 * time.Second)
+	wg.Wait()
 }

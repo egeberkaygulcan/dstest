@@ -54,7 +54,9 @@ func ModifyFilepath(config *Config) {
 
 	config.ProcessConfig.OutputDir = filepath.Join(wd, config.ProcessConfig.OutputDir)
 	config.ProcessConfig.ReplicaScript = filepath.Join(wd, config.ProcessConfig.ReplicaScript)
-	config.ProcessConfig.CleanScript = filepath.Join(wd, config.ProcessConfig.CleanScript)
+	if len(config.ProcessConfig.CleanScript) > 0 {
+		config.ProcessConfig.CleanScript = filepath.Join(wd, config.ProcessConfig.CleanScript)
+	}
 }
 
 func Read() (*Config, error) {
