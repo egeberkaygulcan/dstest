@@ -2,7 +2,10 @@ module github.com/egeberkaygulcan/dstest
 
 go 1.20
 
-require github.com/spf13/viper v1.18.2
+require (
+	github.com/spf13/viper v1.18.2
+	golang.org/x/net v0.19.0
+)
 
 require (
 	github.com/fsnotify/fsnotify v1.7.0 // indirect

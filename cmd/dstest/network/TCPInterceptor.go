@@ -1,6 +1,7 @@
 package network
 
 import (
+	"bytes"
 	"fmt"
 	"log"
 	"net"
@@ -60,37 +61,42 @@ func (ni *TCPInterceptor) Run() (err error) {
 }
 
 func (ni *TCPInterceptor) handleConnection(conn net.Conn) {
-	//ni.Log.Printf("Handling connection from %s\n", conn.RemoteAddr().String())
+	for {
+		var received int
+		i := 0
+		buffer := bytes.NewBuffer(nil)
 
-	// echo back the message
-	buf := make([]byte, 1024*1024)
-	n, err := conn.Read(buf)
-	if err != nil {
-		ni.Log.Fatalf("Error reading from connection: %s\n", err.Error())
+		// read message in chunks
+		for {
+			// echo back the message
+			chunk := make([]byte, 64*1024)
+			read, err := conn.Read(chunk)
+			if err != nil {
+				ni.Log.Fatalf("Error reading from connection: %s\n", err.Error())
+				break
+			}
+			received += read
+			buffer.Write(chunk[:read])
+
+			if read == 0 || read < len(chunk) {
+				break
+			}
+
+			ni.Log.Printf("Msg#%d from %s: %s\n", i, conn.RemoteAddr().String(), string(chunk[:read]))
+		}
+
+		// Push the message to the receiver's message queue
+		ni.NetworkManager.Router.QueueMessage(Message{
+			Sender:   conn.RemoteAddr().(*net.TCPAddr).Port - ni.NetworkManager.Config.NetworkConfig.BaseReplicaPort,
+			Receiver: ni.ID,
+			Payload:  buffer.Bytes(),
+		})
 	}
 
-	ni.Log.Printf("Received from %s: %s\n", conn.RemoteAddr().String(), string(buf[:n]))
-
-	// Push the message to the receiver's message queue
-	ni.NetworkManager.Router.QueueMessage(Message{
-		Sender:   conn.RemoteAddr().(*net.TCPAddr).Port - ni.NetworkManager.Config.NetworkConfig.BaseReplicaPort,
-		Receiver: ni.ID,
-		Payload:  buf[:n],
-	})
-
-	/*
-		// Send the message back to the sender
-		_, err = conn.Write(buf[:n])
-		if err != nil {
-			ni.Log.Fatalf("Error writing to connection: %s\n", err.Error())
-		}
-		ni.Log.Printf("Sent message: %s\n", string(buf[:n]))
-	*/
-
-	err = conn.Close()
+	err := conn.Close()
 	if err != nil {
 		ni.Log.Fatalf("Error closing connection: %s\n", err.Error())
 	}
 
-	//ni.Log.Printf("Connection closed\n")
+	ni.Log.Printf("Connection closed\n")
 }
