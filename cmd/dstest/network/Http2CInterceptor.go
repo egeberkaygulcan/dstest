@@ -43,20 +43,12 @@ func (hi *Http2CInterceptor) Init(id int, port int, nm *Manager) {
 
 	// handle all requests
 	mux.HandleFunc("/", func(w http.ResponseWriter, request *http.Request) {
-		hi.Log.Printf("Received request: %s\n", request.URL.Path)
-		// log the sender ip
-		hi.Log.Printf("Sender IP: %s\n", request.RemoteAddr)
-
-		// for testing, we send the message immediately
-		// first we establish a connection
-		// then we send the message
-		// we redirect the response to the writer
-		// finally we close the connection
+		hi.Log.Printf("Received request from %s: %s\n", request.RemoteAddr, request.URL.Path)
 
 		// create connection to the node we're MITMing
 		thisNodePort := hi.ID + 6000
 		thisNodeAddr := fmt.Sprintf("localhost:%d", thisNodePort)
-		hi.Log.Printf("Connecting to actual node: %s\n", thisNodeAddr)
+		//hi.Log.Printf("Connecting to actual node: %s\n", thisNodeAddr)
 		client := http.Client{
 			Transport: &http2.Transport{
 				AllowHTTP: true,
@@ -88,6 +80,15 @@ func (hi *Http2CInterceptor) Init(id int, port int, nm *Manager) {
 			proxyRequest.Header[h] = val
 		}
 
+		/**
+		 * This is where we should stop execution and queue the message in the network manager
+		 */
+		hi.NetworkManager.Router.QueueMessage(Message{
+			Sender:   -1,
+			Receiver: thisNodePort - 6000,
+			Payload:  Http2CPayload{Request: request, Writer: w},
+		})
+
 		// send the request
 		resp, err := client.Do(proxyRequest)
 		if err != nil {
@@ -95,71 +96,21 @@ func (hi *Http2CInterceptor) Init(id int, port int, nm *Manager) {
 		}
 
 		// send the response to the writer
-		body = make([]byte, 1024*1024)
+		body = make([]byte, 1024*1024) // FIXME: make this dynamic
 		_, err = resp.Body.Read(body)
 
 		if err != nil {
 			hi.Log.Fatalf("Error reading response: %s\n", err)
 		}
-
-		hi.Log.Printf("Response: %s\n", body)
+		//hi.Log.Printf("Response: %s\n", body)
 
 		w.WriteHeader(resp.StatusCode)
-
-		w.Write(body)
+		_, err = w.Write(body)
+		if err != nil {
+			return
+		}
 		// close the connection
 		defer resp.Body.Close()
-
-		/*
-
-			hi.Log.Println("Sending request to actual node: " + request.RequestURI)
-			// make a copy of the request
-			proxyRequest := new(http.Request)
-
-			fmt.Printf("REQ: %+v\n", request)
-			fmt.Printf("PROXY_REQ: %+v\n", proxyRequest)
-
-			resp, _ := client.Do(request)
-			fmt.Printf("RESP: %+v\n", resp)
-
-			// send the response to the writer
-			body := make([]byte, 1024*1024)
-			_, err := resp.Body.Read(body)
-
-			if err != nil {
-				hi.Log.Fatalf("Error reading response: %s\n", err)
-			}
-
-			log.Printf("Response: %s\n", body)
-
-			w.WriteHeader(resp.StatusCode)
-			w.Write(body)
-			// close the connection
-			resp.Body.Close()*/
-
-		/*
-
-			remotePort, _ := strconv.Atoi(strings.Split(request.RemoteAddr, ":")[1])
-
-			responseChannel := make(chan []byte)
-
-			hi.NetworkManager.Router.QueueMessage(Message{
-				Sender:   remotePort,
-				Receiver: hi.ID,
-				Payload:  HttpPayload{Request: request, Writer: w},
-				Response: responseChannel,
-			})
-
-			response := <-responseChannel
-
-			// write the response
-			w.Write(response)
-
-			// close the channel
-			close(responseChannel)
-
-			// log the response
-			hi.Log.Printf("Sent response: %s\n", response)*/
 	})
 
 	h2s := &http2.Server{}
