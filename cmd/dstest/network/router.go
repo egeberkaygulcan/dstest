@@ -34,7 +34,7 @@ func (r *Router) QueueMessage(m Message) {
 	// check if there is connectivity between sender and receiver
 	if r.HasConnectivity(m.Sender, m.Receiver) {
 		r.NetworkManager.MessageQueues[m.Receiver].PushBack(m)
-		r.Log.Printf("Queued message from %d to %d\n", m.Sender, m.Receiver)
+		r.Log.Printf("Queued message from %d to %d: %s\n", m.Sender, m.Receiver, (m.Payload))
 	} else {
 		r.Log.Printf("Message from %d to %d dropped\n", m.Sender, m.Receiver)
 	}

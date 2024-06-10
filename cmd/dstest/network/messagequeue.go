@@ -20,6 +20,8 @@ type Message struct {
 	Payload any
 	// Metadata is any additional data that can be annotated to the message.
 	//Metadata map[string]any
+
+	Response chan []byte
 }
 
 // Init initializes the message queue

@@ -9,7 +9,7 @@
             "type": "go",
             "request": "launch",
             "mode": "debug",
-            "program": "/Users/berkay/Documents/Research/dstest/cmd/dstest/main.go",
+            "program": "./cmd/dstest/main.go",
             "env": {},
             "args": [],
             "showLog": true
