@@ -3,16 +3,17 @@ package main
 import (
 	"fmt"
 	"log"
-	"time"
+	"sync"
 
 	"github.com/egeberkaygulcan/dstest/cmd/dstest/config"
-	"github.com/egeberkaygulcan/dstest/cmd/dstest/network"
+	// "github.com/egeberkaygulcan/dstest/cmd/dstest/network"
 	"github.com/egeberkaygulcan/dstest/cmd/dstest/process"
 )
 
 func main() {
 
 	// ------ DO NOT CHANGE -------
+	
 	fmt.Println("Starting dstest")
 	// Read config
 	cfg, err := config.Read()
@@ -37,20 +38,25 @@ func main() {
 	// Init scheduler
 
 	// Init network
-	nm := new(network.Manager)
-	nm.Init(cfg)
+	// nm := new(network.Manager)
+	// nm.Init(cfg)
 
 	// Init processes
 
 	// Run network
-	go nm.Run()
+	// go nm.Run()
 
 	// Run scheduler
 
 	// Spawn processes
-	go pm.Run()
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		pm.Run()
+		wg.Done()
+	} ()
 
 	// Later wrap this process around an experiment module
 
-	time.Sleep(10 * time.Second)
+	wg.Wait()
 }

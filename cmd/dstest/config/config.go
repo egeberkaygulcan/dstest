@@ -3,6 +3,8 @@ package config
 import (
 	"bytes"
 	_ "embed"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/spf13/viper"
@@ -46,6 +48,17 @@ type Config struct {
 	ProcessConfig   *ProcessConfig
 }
 
+func ModifyFilepath(config *Config) {
+	wd, _ := os.Getwd()
+	wd = filepath.Clean(filepath.Join(wd, "../.."))
+
+	config.ProcessConfig.OutputDir = filepath.Join(wd, config.ProcessConfig.OutputDir)
+	config.ProcessConfig.ReplicaScript = filepath.Join(wd, config.ProcessConfig.ReplicaScript)
+	if len(config.ProcessConfig.CleanScript) > 0 {
+		config.ProcessConfig.CleanScript = filepath.Join(wd, config.ProcessConfig.CleanScript)
+	}
+}
+
 func Read() (*Config, error) {
 	// Environment variables
 	viper.AutomaticEnv()
@@ -65,5 +78,6 @@ func Read() (*Config, error) {
 	if err := viper.Unmarshal(&config); err != nil {
 		return nil, err
 	}
+	ModifyFilepath(&config)
 	return &config, nil
 }

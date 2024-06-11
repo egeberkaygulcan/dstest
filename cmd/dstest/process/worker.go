@@ -2,7 +2,6 @@ package process
 
 import (
 	"fmt"
-	"io"
 	"log"
 	"os"
 	"os/exec"
@@ -29,6 +28,25 @@ const (
 	Exception	ProcessStatus = 5		
 )
 
+func (s ProcessStatus) String() string {
+    switch s {
+    case Initialized:
+        return "Initialized"
+    case Running:
+        return "Running"
+	case Done:
+		return "Done"
+	case Crashed:
+		return "Crashed"
+	case Timeout:
+		return "Timeout"
+	case Exception:
+		return "Exception"
+    default:
+        return fmt.Sprintf("%d", int(s))
+    }
+}
+
 type Worker struct{
 	RunScript 	  string
 	NumReplicas         int
@@ -45,8 +63,8 @@ type Worker struct{
 	Status		  ProcessStatus
 	Cmd    		  *exec.Cmd
 	// TODO - Change the types
-	Stdout		  io.Writer
-	Stderr		  io.Writer
+	Stdout		  *os.File
+	Stderr		  *os.File
 	Log 		  *log.Logger
 }
 
@@ -63,23 +81,21 @@ func (worker *Worker) Init(config map[string]any) {
 
 	worker.TimeoutTimer = nil
 
-	// TODO - Set the config files
-	worker.Stdout = os.Stdout
-	worker.Stderr = os.Stderr
+	worker.Stdout = config["stdout"].(*os.File)
+	worker.Stderr = config["stderr"].(*os.File)
 
 	worker.Status = Initialized
 	worker.Log = log.New(os.Stdout, fmt.Sprintf("[Worker %d] ", worker.WorkerId), log.LstdFlags)
 }
 
 func (worker *Worker) RunWorker() {
-	// defer worker.clean()
+	defer worker.clean()
 
 	worker.Log.Println("Running worker with: " + worker.RunScript + " " + worker.Params)
-	// worker.Cmd = exec.CommandContext(worker.Context, "/bin/sh", worker.RunScript)
+
 	worker.Cmd = exec.Command("/bin/sh", strings.Fields(worker.RunScript + " " + worker.Params)...)
 	worker.Cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 
-	// TODO - Pass the stdout/stderr files
 	worker.Cmd.Stdout = worker.Stdout
 	worker.Cmd.Stderr = worker.Stderr
 
@@ -87,7 +103,7 @@ func (worker *Worker) RunWorker() {
 
 	err := worker.Cmd.Start()
 	if err != nil {
-		worker.Log.Fatalf("Error while starting worker. \nError: %s\n", err)
+		worker.Log.Printf("Error while starting worker. \nError: %s\n", err)
 	}
 
 	if worker.TimeoutTimer == nil {
@@ -102,16 +118,16 @@ func (worker *Worker) RunWorker() {
 
 	select {
 	case <- worker.TimeoutTimer.C:
-		worker.Log.Fatalf("Timeout on worker %d. Killing process.", worker.WorkerId)
+		worker.Log.Println("Timeout, killing process.")
 		worker.Status = Timeout
 		worker.KillWorker()
 		return
 	case err:= <- errch:
 		if err != nil {
 			if worker.Status != Crashed && worker.Status != Done {
-				worker.Log.Fatalf("Error while waiting worker. \nError: %s\n", err)
+				worker.Log.Printf("Error while waiting worker. \nError: %s\n", err)
 				worker.Status = Exception
-				worker.KillWorker() // TODO - Should I?
+				worker.KillWorker()
 			}
 			return
 		}
@@ -142,15 +158,20 @@ func (worker *Worker) RestartWorker() {
 }
 
 func (worker *Worker) clean() {
+	if len(worker.CleanScript) == 0 {
+		return
+	}
+
+	worker.Log.Println("Calling the clean script.")
 	cmd := exec.Command("/bin/bash", worker.CleanScript)
 
 	err := cmd.Start()
 	if err != nil {
-		worker.Log.Fatalf("Error while cleaning up worker. \nError: %s\n", err)
+		worker.Log.Printf("Error while cleaning up worker. \nError: %s\n", err)
 	}
 
 	err = cmd.Wait()
 	if err != nil {
-		worker.Log.Fatalf("Error while waiting worker cleanup. \nError: %s\n", err)
+		worker.Log.Printf("Error while waiting worker cleanup. \nError: %s\n", err)
 	}
 }

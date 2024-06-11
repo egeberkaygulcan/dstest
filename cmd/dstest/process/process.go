@@ -17,6 +17,7 @@ type ProcessManager struct {
 	Log *log.Logger
 	CrashedWorkers map[int]bool
 	WaitGroup *sync.WaitGroup
+	Basedir string
 }
 
 func (pm *ProcessManager) getWorkerId() int {
@@ -27,14 +28,14 @@ func (pm *ProcessManager) getWorkerId() int {
 
 func (pm *ProcessManager) Init(config *config.Config, iteration int) {
 	pm.Config = config
-	pm.Log = log.New(os.Stdout, "", log.Default().Flags())
+	pm.Log = log.New(os.Stdout, "[ProcessManager]", log.Default().Flags())
 	pm.CrashedWorkers = make(map[int]bool)
 	pm.Workers = make(map[int]*Worker)
 	pm.WaitGroup = new(sync.WaitGroup)
 	pm.Iteration = iteration
 
 	if err := os.MkdirAll(pm.Config.ProcessConfig.OutputDir, os.ModePerm); err != nil {
-        log.Fatalf("Error while creating output folder: %s", err)
+        pm.Log.Printf("Could not create output directory.\n Err: %s\n", err)
     }
 
 	// Generate worker configurations
@@ -61,25 +62,28 @@ func (pm *ProcessManager) generateReplicaWorkerConfig() []map[string]any {
 		conf["numReplicas"] = pm.Config.ProcessConfig.NumReplicas
 		conf["params"] = pm.Config.ProcessConfig.ReplicaParams[i]
 		conf["timeout"] = pm.Config.ProcessConfig.Timeout
-		// TODO - Output file create
-		if err := os.MkdirAll(filepath.Join(pm.Config.ProcessConfig.OutputDir, 
-											fmt.Sprintf("%s_%s_%d", 
-														pm.Config.TestConfig.Name, 
-														pm.Config.SchedulerConfig.Type,
-														pm.Iteration)),
-											os.ModePerm); err != nil {
-			log.Fatal(err)
+		pm.Basedir = filepath.Join(pm.Config.ProcessConfig.OutputDir, 
+								fmt.Sprintf("%s_%s_%d", 
+											pm.Config.TestConfig.Name, 
+											pm.Config.SchedulerConfig.Type,
+											pm.Iteration))
+		if err := os.MkdirAll(pm.Basedir, os.ModePerm); err != nil {
+			pm.Log.Printf("Could not create iteration directory.\n Err: %s\n", err)
 		}
+		conf["basedir"] = pm.Basedir 
 
-		// stdout, err := os.OpenFile(fmt.Sprintf("%s_"), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-		// if err != nil {
-		// 	log.Fatal(err)
-		// }
+		stdout, err := os.OpenFile(filepath.Join(pm.Basedir, fmt.Sprintf("stdout_%d.log", conf["workerId"])), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		if err != nil {
+			pm.Log.Printf("Could not create worker stdout.\n Err: %s\n", err)
+		}
+		conf["stdout"] = stdout
 
-		// stderr, err := os.OpenFile("access.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-		// if err != nil {
-		// 	log.Fatal(err)
-		// }
+		stderr, err := os.OpenFile(filepath.Join(pm.Basedir, fmt.Sprintf("stderr_%d.log", conf["workerId"])), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		if err != nil {
+			pm.Log.Printf("Could not create worker stderr.\n Err: %s\n", err)
+		}
+		conf["stderr"] = stderr
+
 		config = append(config, conf)
 	}
 
@@ -93,14 +97,23 @@ func (pm *ProcessManager) Run() {
 		go func(worker *Worker, wg *sync.WaitGroup) {
 			worker.RunWorker()
 			wg.Done()
-			delete(pm.Workers, worker.WorkerId)
 		} (worker, pm.WaitGroup)
 	}
 
 	pm.WaitGroup.Wait()
 
+	var bug bool = false
 	for workerId, worker := range pm.Workers {
-		pm.Log.Printf("Worker %d status: %d\n", workerId, worker.Status)
+		if worker.Status != Done {
+			bug = true
+		}
+		pm.Log.Printf("Worker %d status: %s\n", workerId, worker.Status.String())
+	}
+
+	if !bug {
+		pm.deleteDir()
+	} else {
+		pm.Log.Printf("Found bug candidate at iteration %d\n", pm.Iteration)
 	}
 }
 
@@ -108,6 +121,7 @@ func (pm *ProcessManager) Reset() {
 	// TODO - Kill workers
 	for _, worker := range pm.Workers {
 		worker.StopWorker()
+		delete(pm.Workers, worker.WorkerId)
 	}
 
 	// TODO - Reset properties
@@ -150,4 +164,8 @@ func (pm *ProcessManager) RunClient() {
 	// Initialize client
 
 	// Call client worker as goroutine
+}
+
+func (pm *ProcessManager) deleteDir() {
+	os.RemoveAll(pm.Basedir)
 }
