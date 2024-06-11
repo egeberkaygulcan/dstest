@@ -12,7 +12,7 @@ NetworkConfig:
   BaseInterceptorPort: 10000
 ProcessConfig:
   NumReplicas: 3
-  Timeout: 10
+  Timeout: 300
   OutputDir: output
   ReplicaScript: scripts/ratis_server.sh
   ClientScripts: [ client.sh ]

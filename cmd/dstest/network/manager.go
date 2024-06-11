@@ -26,7 +26,7 @@ func (nm *Manager) Init(config *config.Config) {
 	// create the interceptors and message queues
 	for i := 0; i < numReplicas; i++ {
 		nm.MessageQueues[i] = new(MessageQueue)
-		nm.Interceptors[i] = new(TCPInterceptor)
+		nm.Interceptors[i] = new(Http2CInterceptor)
 		nm.MessageQueues[i].Init()
 		nm.Interceptors[i].Init(i, nm.Config.NetworkConfig.BaseInterceptorPort+i, nm)
 	}
