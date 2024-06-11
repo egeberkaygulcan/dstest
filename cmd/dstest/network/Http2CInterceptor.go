@@ -8,7 +8,6 @@ import (
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 	"io"
-	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
@@ -60,7 +59,7 @@ func (hi *Http2CInterceptor) Init(id int, port int, nm *Manager) {
 		}
 
 		// we need to buffer the body if we want to read it here and send it in the request
-		body, err := ioutil.ReadAll(request.Body)
+		body, err := io.ReadAll(request.Body)
 		if err != nil {
 			hi.Log.Fatalf("Error reading request body: %s\n", err)
 		}
@@ -110,7 +109,12 @@ func (hi *Http2CInterceptor) Init(id int, port int, nm *Manager) {
 			return
 		}
 		// close the connection
-		defer resp.Body.Close()
+		defer func(Body io.ReadCloser) {
+			err := Body.Close()
+			if err != nil {
+				hi.Log.Fatalf("Error closing response body: %s\n", err)
+			}
+		}(resp.Body)
 	})
 
 	h2s := &http2.Server{}
