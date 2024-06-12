@@ -21,7 +21,12 @@ type Message struct {
 	// Metadata is any additional data that can be annotated to the message.
 	//Metadata map[string]any
 
-	Response chan []byte
+	// A channel to trigger sending the response
+	Send chan struct{}
+}
+
+func (m *Message) send() {
+	close(m.Send)
 }
 
 // Init initializes the message queue
@@ -30,15 +35,15 @@ func (mq *MessageQueue) Init() {
 }
 
 // PushBack adds a message to the back of the queue
-func (mq *MessageQueue) PushBack(m Message) {
+func (mq *MessageQueue) PushBack(m *Message) {
 	mq.List.PushBack(m)
 }
 
 // PopFront removes a message from the front of the queue
-func (mq *MessageQueue) PopFront() Message {
+func (mq *MessageQueue) PopFront() *Message {
 	e := mq.List.Front()
 	mq.List.Remove(e)
-	return e.Value.(Message)
+	return e.Value.(*Message)
 }
 
 // Len returns the length of the queue
