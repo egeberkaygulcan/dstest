@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/egeberkaygulcan/dstest/cmd/dstest/network"
 	"log"
 	"sync"
 
@@ -13,7 +14,7 @@ import (
 func main() {
 
 	// ------ DO NOT CHANGE -------
-	
+
 	fmt.Println("Starting dstest")
 	// Read config
 	cfg, err := config.Read()
@@ -27,7 +28,7 @@ func main() {
 
 	// Spawn goroutine
 	pm := new(process.ProcessManager)
-  pm.Init(cfg, 0)
+	pm.Init(cfg, 0)
 	// out, err := process.RunReplicaWorker(*cfg.ProcessConfig)
 
 	// if err != nil {
@@ -38,13 +39,13 @@ func main() {
 	// Init scheduler
 
 	// Init network
-	// nm := new(network.Manager)
-	// nm.Init(cfg)
+	nm := new(network.Manager)
+	nm.Init(cfg)
 
 	// Init processes
 
 	// Run network
-	// go nm.Run()
+	go nm.Run()
 
 	// Run scheduler
 
@@ -54,7 +55,7 @@ func main() {
 	go func() {
 		pm.Run()
 		wg.Done()
-	} ()
+	}()
 
 	// Later wrap this process around an experiment module
 

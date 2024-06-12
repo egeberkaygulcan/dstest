@@ -1,14 +1,10 @@
 package scheduling
 
-import "github.com/egeberkaygulcan/dstest/cmd/dstest/network"
+//import "github.com/egeberkaygulcan/dstest/cmd/dstest/network"
 
 type Scheduler interface {
-	// Init initializes the scheduler
 	Init()
-
-	OnQueuedMessage(m *network.Message)
-
+	OnQueuedMessage(m *any)
 	OnStartup()
-
 	OnShutdown()
 }

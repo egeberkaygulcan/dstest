@@ -2,7 +2,6 @@ package scheduling
 
 import (
 	"fmt"
-	"github.com/egeberkaygulcan/dstest/cmd/dstest/network"
 )
 
 type BasicScheduler struct {
@@ -10,7 +9,6 @@ type BasicScheduler struct {
 }
 
 // Check if BasicScheduler implements Scheduler interface
-var _ Scheduler = (*BasicScheduler)(nil)
 
 func (bs *BasicScheduler) Init() {
 	fmt.Println("BasicScheduler initialized")
@@ -21,7 +19,7 @@ func (bs *BasicScheduler) OnStartup() {
 	fmt.Println("BasicScheduler Startup!")
 }
 
-func (bs *BasicScheduler) OnQueuedMessage(m *network.Message) {
+func (bs *BasicScheduler) OnQueuedMessage(m *any) {
 	// Initialization code goes here
 	fmt.Println("BasicScheduler initialized")
 }

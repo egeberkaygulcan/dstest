@@ -173,8 +173,3 @@ func http2CRequestHandler(hi *Http2CInterceptor) http.HandlerFunc {
 		}(resp.Body)
 	}
 }
-
-func dummyScheduler() {
-	// dummy function to satisfy the interface
-	fmt.Printf("Dummy scheduler invoked!!\n")
-}

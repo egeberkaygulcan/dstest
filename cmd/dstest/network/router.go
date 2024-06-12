@@ -36,7 +36,7 @@ func (r *Router) QueueMessage(m Message) {
 		r.NetworkManager.MessageQueues[m.Receiver].PushBack(&m)
 		r.Log.Printf("Queued message #%d from %d to %d: %s\n", r.NetworkManager.MessageQueues[m.Receiver].Len(), m.Sender, m.Receiver, (m.Payload))
 		// notify scheduler
-		r.NetworkManager.Scheduler.OnQueuedMessage(&m)
+		//r.NetworkManager.Scheduler.OnQueuedMessage(&m)
 	} else {
 		r.Log.Printf("Message from %d to %d dropped\n", m.Sender, m.Receiver)
 	}
