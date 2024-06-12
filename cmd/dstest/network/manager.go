@@ -2,6 +2,7 @@ package network
 
 import (
 	"github.com/egeberkaygulcan/dstest/cmd/dstest/config"
+	"github.com/egeberkaygulcan/dstest/cmd/dstest/scheduling"
 	"log"
 )
 
@@ -11,6 +12,7 @@ type Manager struct {
 	Router        *Router
 	Interceptors  []Interceptor
 	MessageQueues []*MessageQueue
+	Scheduler     scheduling.Scheduler
 }
 
 func (nm *Manager) Init(config *config.Config) {
@@ -20,6 +22,7 @@ func (nm *Manager) Init(config *config.Config) {
 	nm.Router = new(Router)
 	nm.Interceptors = make([]Interceptor, numReplicas)
 	nm.MessageQueues = make([]*MessageQueue, numReplicas)
+	nm.Scheduler = new(scheduling.BasicScheduler)
 
 	nm.Router.Init(nm, numReplicas)
 
