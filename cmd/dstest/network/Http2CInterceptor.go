@@ -25,8 +25,9 @@ type Http2CInterceptor struct {
 }
 
 type Http2CPayload struct {
-	Request *http.Request
-	Writer  http.ResponseWriter
+	Request  *http.Request
+	Response *http.Response
+	Writer   http.ResponseWriter
 }
 
 // Check if BaseInterceptor implements Interceptor interface
@@ -41,7 +42,42 @@ func (hi *Http2CInterceptor) Init(id int, port int, nm *Manager) {
 	mux := http.NewServeMux()
 
 	// handle all requests
-	mux.HandleFunc("/", func(w http.ResponseWriter, request *http.Request) {
+	mux.HandleFunc("/", http2CRequestHandler(hi))
+
+	h2s := &http2.Server{}
+
+	// create the server
+	hi.Server = &http.Server{
+		Addr:           fmt.Sprintf(":%d", port),
+		Handler:        h2c.NewHandler(mux, h2s),
+		ReadTimeout:    10 * time.Second,
+		WriteTimeout:   10 * time.Second,
+		MaxHeaderBytes: 1 << 20,
+	}
+}
+
+func (hi *Http2CInterceptor) Run() (err error) {
+	// check if the interceptor is initialized
+	if !hi.isInitialized {
+		hi.Log.Fatalf("BaseInterceptor is not initialized\n")
+		return
+	}
+
+	// log the port
+	hi.Log.Printf("Running HTTP interceptor on port %d\n", hi.Port)
+
+	go func() {
+		err := hi.Server.ListenAndServe()
+		if err != nil {
+			hi.Log.Fatalf("Error listening on port %d: %s\n", hi.Port, err.Error())
+		}
+	}()
+
+	return nil
+}
+
+func http2CRequestHandler(hi *Http2CInterceptor) http.HandlerFunc {
+	return func(w http.ResponseWriter, request *http.Request) {
 		hi.Log.Printf("Received request from %s: %s\n", request.RemoteAddr, request.URL.Path)
 
 		// create connection to the node we're MITMing
@@ -79,14 +115,15 @@ func (hi *Http2CInterceptor) Init(id int, port int, nm *Manager) {
 			proxyRequest.Header[h] = val
 		}
 
-		/**
-		 * This is where we should stop execution and queue the message in the network manager
-		 */
+		// queue the request in the network manager
+		awaitSendRequest := make(chan struct{})
 		hi.NetworkManager.Router.QueueMessage(Message{
 			Sender:   -1,
 			Receiver: thisNodePort - 6000,
-			Payload:  Http2CPayload{Request: request, Writer: w},
+			Payload:  Http2CPayload{Request: proxyRequest, Writer: w, Response: nil},
+			Send:     awaitSendRequest,
 		})
+		//<-awaitSendRequest
 
 		// send the request
 		resp, err := client.Do(proxyRequest)
@@ -94,20 +131,39 @@ func (hi *Http2CInterceptor) Init(id int, port int, nm *Manager) {
 			hi.Log.Fatalf("Error sending request to actual node: %s\n", err)
 		}
 
-		// send the response to the writer
-		body = make([]byte, 1024*1024) // FIXME: make this dynamic
-		_, err = resp.Body.Read(body)
+		// create a buffer to hold the response body
+		var buffer bytes.Buffer
+
+		// copy the response body to the buffer
+		_, err = io.Copy(&buffer, resp.Body)
+		if err != nil {
+			hi.Log.Fatalf("Error reading response: %s\n", err)
+		}
+
+		// convert the buffer to a byte slice
+		body = buffer.Bytes()
 
 		if err != nil {
 			hi.Log.Fatalf("Error reading response: %s\n", err)
 		}
-		//hi.Log.Printf("Response: %s\n", body)
 
+		// queue sending the response in the network manager
+		awaitSendResponse := make(chan struct{})
+		hi.NetworkManager.Router.QueueMessage(Message{
+			Sender:   -1,
+			Receiver: thisNodePort - 6000,
+			Payload:  Http2CPayload{Response: resp, Writer: w, Request: nil},
+			Send:     awaitSendResponse,
+		})
+		//<-awaitSendResponse
+
+		// send the response
 		w.WriteHeader(resp.StatusCode)
 		_, err = w.Write(body)
 		if err != nil {
 			return
 		}
+
 		// close the connection
 		defer func(Body io.ReadCloser) {
 			err := Body.Close()
@@ -115,36 +171,10 @@ func (hi *Http2CInterceptor) Init(id int, port int, nm *Manager) {
 				hi.Log.Fatalf("Error closing response body: %s\n", err)
 			}
 		}(resp.Body)
-	})
-
-	h2s := &http2.Server{}
-
-	// create the server
-	hi.Server = &http.Server{
-		Addr:           fmt.Sprintf(":%d", port),
-		Handler:        h2c.NewHandler(mux, h2s),
-		ReadTimeout:    10 * time.Second,
-		WriteTimeout:   10 * time.Second,
-		MaxHeaderBytes: 1 << 20,
 	}
 }
 
-func (hi *Http2CInterceptor) Run() (err error) {
-	// check if the interceptor is initialized
-	if !hi.isInitialized {
-		hi.Log.Fatalf("BaseInterceptor is not initialized\n")
-		return
-	}
-
-	// log the port
-	hi.Log.Printf("Running HTTP interceptor on port %d\n", hi.Port)
-
-	go func() {
-		err := hi.Server.ListenAndServe()
-		if err != nil {
-			hi.Log.Fatalf("Error listening on port %d: %s\n", hi.Port, err.Error())
-		}
-	}()
-
-	return nil
+func dummyScheduler() {
+	// dummy function to satisfy the interface
+	fmt.Printf("Dummy scheduler invoked!!\n")
 }
