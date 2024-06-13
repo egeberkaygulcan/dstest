@@ -8,12 +8,14 @@ import (
 type Router struct {
 	RoutingTable   [][]bool
 	NetworkManager *Manager
+	MessageTranslator MessageTranslator
 	Log            *log.Logger
 }
 
 func (r *Router) Init(NetworkManager *Manager, numReplicas int) {
 	r.NetworkManager = NetworkManager
 	r.RoutingTable = make([][]bool, numReplicas)
+	r.MessageTranslator = NewMessageTranslator(GRPC)
 	r.Log = log.New(log.Writer(), "[Router] ", log.LstdFlags)
 
 	// create N*N routing table
@@ -32,6 +34,7 @@ func (r *Router) Init(NetworkManager *Manager, numReplicas int) {
 // queue message
 func (r *Router) QueueMessage(m Message) {
 	// check if there is connectivity between sender and receiver
+	r.MessageTranslator.Translate(m)
 	if r.HasConnectivity(m.Sender, m.Receiver) {
 		r.NetworkManager.MessageQueues[m.Receiver].PushBack(&m)
 		r.Log.Printf("Queued message #%d from %d to %d: %s\n", r.NetworkManager.MessageQueues[m.Receiver].Len(), m.Sender, m.Receiver, (m.Payload))
