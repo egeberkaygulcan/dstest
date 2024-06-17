@@ -6,10 +6,10 @@ import (
 )
 
 type Router struct {
-	RoutingTable   [][]bool
-	NetworkManager *Manager
+	RoutingTable      [][]bool
+	NetworkManager    *Manager
 	MessageTranslator MessageTranslator
-	Log            *log.Logger
+	Log               *log.Logger
 }
 
 func (r *Router) Init(NetworkManager *Manager, numReplicas int) {
@@ -27,6 +27,25 @@ func (r *Router) Init(NetworkManager *Manager, numReplicas int) {
 		}
 	}
 
+	/*
+		// insert a network fault: isolate node 0 from seconds 2 to 5
+		go func() {
+			// wait for 2 seconds
+			time.Sleep(2 * time.Second)
+
+			// isolate node 0
+			r.Log.Println("Isolating node 0")
+			r.IsolateNode(0)
+			r.PrintRoutingTable()
+
+			// wait for 3 seconds
+			time.Sleep(3 * time.Second)
+
+			// heal network
+			r.Log.Println("Resetting partitions")
+			r.ResetPartitions()
+			r.PrintRoutingTable()
+		}()*/
 	//r.CreatePartitions([][]int{[]int{0, 1}, []int{2}})
 	//r.PrintRoutingTable()
 }
@@ -113,4 +132,13 @@ func (r *Router) CreatePartitions(partitions [][]int) {
 		}
 	}
 	r.PrintRoutingTable()
+}
+
+func (r *Router) ResetPartitions() {
+	numReplicas := len(r.RoutingTable)
+	for i := 0; i < numReplicas; i++ {
+		for j := 0; j < numReplicas; j++ {
+			r.RoutingTable[i][j] = true
+		}
+	}
 }
