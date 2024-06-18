@@ -1,9 +1,12 @@
 package network
 
 import (
-	"github.com/egeberkaygulcan/dstest/cmd/dstest/config"
-	"github.com/egeberkaygulcan/dstest/cmd/dstest/scheduling"
 	"log"
+	"sync"
+	"sync/atomic"
+
+	"github.com/egeberkaygulcan/dstest/cmd/dstest/config"
+	// "github.com/egeberkaygulcan/dstest/cmd/dstest/scheduling"
 )
 
 type Manager struct {
@@ -12,17 +15,22 @@ type Manager struct {
 	Router        *Router
 	Interceptors  []Interceptor
 	MessageQueues []*MessageQueue
-	Scheduler     scheduling.Scheduler
+	index atomic.Uint64
+	WaitGroup	  sync.WaitGroup
+	ReplicaIds []int
+
+	// Scheduler     scheduling.Scheduler
 }
 
-func (nm *Manager) Init(config *config.Config) {
+func (nm *Manager) Init(config *config.Config, replicaIds []int) {
 	numReplicas := config.ProcessConfig.NumReplicas
 
 	nm.Config = config
 	nm.Router = new(Router)
 	nm.Interceptors = make([]Interceptor, numReplicas)
 	nm.MessageQueues = make([]*MessageQueue, numReplicas)
-	nm.Scheduler = new(scheduling.BasicScheduler)
+	nm.ReplicaIds = replicaIds
+	// nm.Scheduler = new(scheduling.BasicScheduler)
 
 	nm.Router.Init(nm, numReplicas)
 
@@ -43,8 +51,59 @@ func (nm *Manager) Init(config *config.Config) {
 func (nm *Manager) Run() {
 	// Run interceptors
 	for i := 0; i < len(nm.Interceptors); i++ {
-		go nm.Interceptors[i].Run()
+		nm.WaitGroup.Add(1)
+		go func(index int) {
+			nm.Interceptors[index].Run()
+			nm.WaitGroup.Done()
+		}(i)
 	}
 
 	nm.Log.Println("Network manager running")
+	nm.WaitGroup.Wait()
+}
+
+func (nm *Manager) Shutdown() {
+	for _, interceptor := range nm.Interceptors {
+		interceptor.Shutdown()
+	}
+}
+
+func (nm *Manager) GenerateUniqueId() uint64 {
+	return nm.index.Add(1) 
+}
+
+func (nm *Manager) SendMessage(messageId uint64) {
+	for _, mq := range nm.MessageQueues {
+		if mq.Peek() != nil {
+			if mq.Peek().MessageId == messageId {
+				message := mq.PopFront()
+				message.SendMessage()
+			}
+		}
+	}
+}
+
+func (nm *Manager) GetActions() []*Message {
+	var actions []*Message
+
+	delayMessage := &(Message{
+		Sender:   -1,
+		Receiver: -1,
+		Payload:  Http2CPayload{Request: nil, Writer: nil, Response: nil},
+		Type: "Delay",
+		Name: "Delay",
+		MessageId: nm.GenerateUniqueId(),
+		Send:     nil,
+	})
+	actions = append(actions, delayMessage)
+
+	for _, mq := range nm.MessageQueues {
+		action := mq.Peek()
+
+		if action != nil {
+			actions = append(actions, action)
+		}
+	}
+
+	return actions
 }

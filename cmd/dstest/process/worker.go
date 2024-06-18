@@ -62,7 +62,7 @@ type Worker struct{
 	TimeoutTimer  *time.Timer
 	Status		  ProcessStatus
 	Cmd    		  *exec.Cmd
-	// TODO - Change the types
+
 	Stdout		  *os.File
 	Stderr		  *os.File
 	Log 		  *log.Logger
@@ -147,7 +147,15 @@ func (worker *Worker) CrashWorker() {
 }
 
 func (worker *Worker) StopWorker() {
-	worker.Status = Done
+	data, err := os.ReadFile(worker.Stderr.Name())
+	if err != nil {
+		panic(err)
+	}
+	lines := strings.Split(string(data), "\n")
+	if len(lines[0]) == 0 {
+		worker.Status = Done // TODO - Bug! Never deletes the output folder
+	}
+
 	worker.KillWorker()
 }
 

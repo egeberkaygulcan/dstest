@@ -8,6 +8,7 @@ import (
 type Interceptor interface {
 	Init(id int, port int, nm *Manager)
 	Run() (err error)
+	Shutdown()
 }
 
 type BaseInterceptor struct {

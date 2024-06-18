@@ -12,27 +12,24 @@ import (
 type ProcessManager struct {
 	Config *config.Config
 	Workers map[int]*Worker
+	WorkerIds []int
 	Iteration int
-	IdCounter int
 	Log *log.Logger
 	CrashedWorkers map[int]bool
 	WaitGroup *sync.WaitGroup
 	Basedir string
+	BugCandidate bool
 }
 
-func (pm *ProcessManager) getWorkerId() int {
-	id := pm.IdCounter
-	pm.IdCounter++
-	return id
-}
-
-func (pm *ProcessManager) Init(config *config.Config, iteration int) {
+func (pm *ProcessManager) Init(config *config.Config, workerIds []int, iteration int) {
 	pm.Config = config
 	pm.Log = log.New(os.Stdout, "[ProcessManager]", log.Default().Flags())
 	pm.CrashedWorkers = make(map[int]bool)
 	pm.Workers = make(map[int]*Worker)
+	pm.WorkerIds = workerIds
 	pm.WaitGroup = new(sync.WaitGroup)
 	pm.Iteration = iteration
+	pm.BugCandidate = false
 
 	if err := os.MkdirAll(pm.Config.ProcessConfig.OutputDir, os.ModePerm); err != nil {
         pm.Log.Printf("Could not create output directory.\n Err: %s\n", err)
@@ -56,7 +53,7 @@ func (pm *ProcessManager) generateReplicaWorkerConfig() []map[string]any {
 		conf["runScript"] = pm.Config.ProcessConfig.ReplicaScript
 		conf["cleanScript"] = pm.Config.ProcessConfig.CleanScript
 		conf["clientScripts"] = pm.Config.ProcessConfig.ClientScripts
-		conf["workerId"] = pm.getWorkerId()
+		conf["workerId"] = pm.WorkerIds[i]
 		conf["type"] = Replica
 		conf["baseInterceptorPort"] = pm.Config.NetworkConfig.BaseInterceptorPort
 		conf["numReplicas"] = pm.Config.ProcessConfig.NumReplicas
@@ -114,25 +111,22 @@ func (pm *ProcessManager) Run() {
 		pm.deleteDir()
 	} else {
 		pm.Log.Printf("Found bug candidate at iteration %d\n", pm.Iteration)
+		pm.BugCandidate = true
 	}
 }
 
-func (pm *ProcessManager) Reset() {
-	// TODO - Kill workers
+func (pm *ProcessManager) Shutdown() {
 	for _, worker := range pm.Workers {
-		worker.StopWorker()
-		delete(pm.Workers, worker.WorkerId)
+		if worker.Status != Exception && worker.Status != Timeout {
+			worker.StopWorker()
+		}
 	}
-
-	// TODO - Reset properties
-	pm.IdCounter = 0
-
 }
 
 func (pm *ProcessManager) CrashReplica(workerId int) bool {
 	for _, w := range pm.Workers {
 		if w.WorkerId == workerId {
-			w.KillWorker()
+			w.CrashWorker()
 			pm.WaitGroup.Done()
 			pm.CrashedWorkers[workerId] = true
 			return true

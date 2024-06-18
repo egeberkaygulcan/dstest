@@ -37,10 +37,13 @@ func (hi *HttpInterceptor) Init(id int, port int, nm *Manager) {
 
 		remotePort, _ := strconv.Atoi(strings.Split(request.RemoteAddr, ":")[1])
 
-		hi.NetworkManager.Router.QueueMessage(Message{
+		hi.NetworkManager.Router.QueueMessage(&Message{
 			Sender:   remotePort,
 			Receiver: hi.ID,
 			Payload:  HttpPayload{Request: request, Writer: w},
+			Type: "",
+			Name: "",
+			MessageId: hi.NetworkManager.GenerateUniqueId(),
 		})
 	})
 
@@ -69,4 +72,8 @@ func (hi *HttpInterceptor) Run() (err error) {
 	}()
 
 	return nil
+}
+
+func (hi *HttpInterceptor) Shutdown() {
+	
 }
