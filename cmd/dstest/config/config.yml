@@ -1,9 +1,10 @@
 TestConfig:
   Name: ratis-test
-  Experiments: 10
-  Iterations: 10000
+  Experiments: 1
+  Iterations: 10
+  WaitDuration: 50 # Time duration to wait between execution steps in milliseconds
 SchedulerConfig: #TODO - Seperate the scheduler param
-  Type: random
+  Type: "random"
   Steps: 100
   Seed: 42
   Params: {} 
@@ -12,15 +13,15 @@ NetworkConfig:
   BaseInterceptorPort: 10000
 ProcessConfig:
   NumReplicas: 3
-  Timeout: 300
+  Timeout: 10
   OutputDir: output
   ReplicaScript: scripts/ratis_server.sh
   ClientScripts: [ client.sh ]
   CleanScript: scripts/ratis_clean.sh
   ReplicaParams:
-    - "6000 6001 6002 n0"
-    - "6000 6001 6002 n1"
-    - "6000 6001 6002 n2"
-    # - "6000 10001 10002 n0"
-    # - "10000 6001 10002 n1"
-    # - "10000 10001 6002 n2"
+    # - "6000 6001 6002 n0"
+    # - "6000 6001 6002 n1"
+    # - "6000 6001 6002 n2"
+    - "6000 10001 10002 n0"
+    - "10000 6001 10002 n1"
+    - "10000 10001 6002 n2"

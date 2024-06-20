@@ -60,6 +60,10 @@ func (ni *TCPInterceptor) Run() (err error) {
 	}
 }
 
+func (ni *TCPInterceptor) Shutdown() {
+	
+}
+
 func (ni *TCPInterceptor) handleConnection(conn net.Conn) {
 	for {
 		var received int
@@ -86,10 +90,13 @@ func (ni *TCPInterceptor) handleConnection(conn net.Conn) {
 		}
 
 		// Push the message to the receiver's message queue
-		ni.NetworkManager.Router.QueueMessage(Message{
+		ni.NetworkManager.Router.QueueMessage(&Message{
 			Sender:   conn.RemoteAddr().(*net.TCPAddr).Port - ni.NetworkManager.Config.NetworkConfig.BaseReplicaPort,
 			Receiver: ni.ID,
 			Payload:  buffer.Bytes(),
+			Type: "",
+			Name: "",
+			MessageId: ni.NetworkManager.GenerateUniqueId(),
 		})
 	}
 

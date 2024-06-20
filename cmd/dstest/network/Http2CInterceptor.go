@@ -66,14 +66,16 @@ func (hi *Http2CInterceptor) Run() (err error) {
 	// log the port
 	hi.Log.Printf("Running HTTP interceptor on port %d\n", hi.Port)
 
-	go func() {
-		err := hi.Server.ListenAndServe()
-		if err != nil {
-			hi.Log.Fatalf("Error listening on port %d: %s\n", hi.Port, err.Error())
-		}
-	}()
+	err = hi.Server.ListenAndServe()
+	if err != nil && err != http.ErrServerClosed{
+		hi.Log.Printf("Error listening on port %d: %s\n", hi.Port, err.Error())
+	}
 
 	return nil
+}
+
+func (hi *Http2CInterceptor) Shutdown() {
+	hi.Server.Close() // TODO - Error handling
 }
 
 func http2CRequestHandler(hi *Http2CInterceptor) http.HandlerFunc {
@@ -117,13 +119,16 @@ func http2CRequestHandler(hi *Http2CInterceptor) http.HandlerFunc {
 
 		// queue the request in the network manager
 		awaitSendRequest := make(chan struct{})
-		hi.NetworkManager.Router.QueueMessage(Message{
+		hi.NetworkManager.Router.QueueMessage(&Message{
 			Sender:   -1,
 			Receiver: thisNodePort - 6000,
 			Payload:  Http2CPayload{Request: proxyRequest, Writer: w, Response: nil},
+			Type: "",
+			Name: "",
+			MessageId: hi.NetworkManager.GenerateUniqueId(),
 			Send:     awaitSendRequest,
 		})
-		//<-awaitSendRequest
+		<-awaitSendRequest
 
 		// send the request
 		resp, err := client.Do(proxyRequest)
@@ -149,10 +154,14 @@ func http2CRequestHandler(hi *Http2CInterceptor) http.HandlerFunc {
 
 		// queue sending the response in the network manager
 		awaitSendResponse := make(chan struct{})
-		hi.NetworkManager.Router.QueueMessage(Message{
+		// TODO - Do we need to queue this?
+		hi.NetworkManager.Router.QueueMessage(&Message{
 			Sender:   -1,
-			Receiver: thisNodePort - 6000,
+			Receiver: thisNodePort - 6000,// TODO - Remove the hard coded port
 			Payload:  Http2CPayload{Response: resp, Writer: w, Request: nil},
+			Type: "",
+			Name: "",
+			MessageId: hi.NetworkManager.GenerateUniqueId(),
 			Send:     awaitSendResponse,
 		})
 		//<-awaitSendResponse

@@ -12,22 +12,7 @@ type MessageQueue struct {
 	List list.List
 }
 
-// Message is a message that can be sent between processes
-type Message struct {
-	// Sender is the id of the sender process.
-	Sender int
-	// Receiver is the id of the receiver process.
-	Receiver int
-	// Payload is the data that is being sent.
-	Payload any
-	// Metadata is any additional data that can be annotated to the message.
-	//Metadata map[string]any
-
-	// A channel to trigger sending the response
-	Send chan struct{}
-}
-
-func (m *Message) send() {
+func (m *Message) SendMessage() {
 	close(m.Send)
 }
 
@@ -81,4 +66,17 @@ func (mq *MessageQueue) Print(Logger *log.Logger) {
 		i += 1
 	}
 	mq.mu.Unlock()
+}
+
+func (mq *MessageQueue) Peek() *Message {
+	var msg *Message = nil
+	mq.mu.Lock()
+	message := (mq.List.Front())
+	if message != nil {
+		msg = message.Value.(*Message)
+	} else {
+		msg = nil
+	}
+	mq.mu.Unlock()
+	return msg
 }

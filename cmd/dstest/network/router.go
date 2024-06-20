@@ -51,16 +51,16 @@ func (r *Router) Init(NetworkManager *Manager, numReplicas int) {
 }
 
 // queue message
-func (r *Router) QueueMessage(m Message) {
+func (r *Router) QueueMessage(m *Message) {
 	// check if there is connectivity between sender and receiver
-	r.MessageTranslator.Translate(m)
-	if r.HasConnectivity(m.Sender, m.Receiver) {
-		r.NetworkManager.MessageQueues[m.Receiver].PushBack(&m)
-		r.Log.Printf("Queued message #%d from %d to %d: %s\n", r.NetworkManager.MessageQueues[m.Receiver].Len(), m.Sender, m.Receiver, (m.Payload))
+	tm := r.MessageTranslator.Translate(m)
+	if r.HasConnectivity(tm.Sender, tm.Receiver) {
+		r.NetworkManager.MessageQueues[tm.Receiver].PushBack(tm)
+		r.Log.Printf("Queued message #%d from %d to %d: %s\n", r.NetworkManager.MessageQueues[tm.Receiver].Len(), tm.Sender, tm.Receiver, (tm.Payload))
 		// notify scheduler
 		//r.NetworkManager.Scheduler.OnQueuedMessage(&m)
 	} else {
-		r.Log.Printf("Message from %d to %d dropped\n", m.Sender, m.Receiver)
+		r.Log.Printf("Message from %d to %d dropped\n", tm.Sender, tm.Receiver)
 	}
 }
 
@@ -70,7 +70,7 @@ func (r *Router) QueueMessage(m Message) {
 // this is to avoid dropping messages when there is an error in the test
 func (r *Router) HasConnectivity(from int, to int) bool {
 	if (from < 0 || from >= len(r.RoutingTable)) || (to < 0 || to >= len(r.RoutingTable)) {
-		r.Log.Println(fmt.Sprintf("Invalid node IDs: from %d to %d", from, to))
+		r.Log.Printf("Invalid node IDs: from %d to %d\n", from, to)
 		return true
 	}
 	return r.RoutingTable[from][to]
