@@ -30,6 +30,7 @@ type SchedulerConfig struct {
 type NetworkConfig struct {
 	BaseReplicaPort     int
 	BaseInterceptorPort int
+	Protocol            string
 }
 
 type ProcessConfig struct {

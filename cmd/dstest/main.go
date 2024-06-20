@@ -26,5 +26,8 @@ func main() {
 	te := new(engine.TestEngine)
 	te.Init(cfg)
 
-	te.Run()
+	err = te.Run()
+	if err != nil {
+		fmt.Println(err)
+	}
 }
