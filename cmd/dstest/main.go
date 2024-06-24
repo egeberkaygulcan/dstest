@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/egeberkaygulcan/dstest/cmd/dstest/cmd"
 	"github.com/egeberkaygulcan/dstest/cmd/dstest/config"
 	"github.com/egeberkaygulcan/dstest/cmd/dstest/engine"
 )
@@ -30,4 +31,5 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	}
+	cmd.Execute()
 }
