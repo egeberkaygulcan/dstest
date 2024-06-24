@@ -2,6 +2,7 @@ package engine
 
 import (
 	"fmt"
+	"github.com/egeberkaygulcan/dstest/cmd/dstest/faults"
 	"log"
 	"os"
 	"path/filepath"
@@ -15,23 +16,28 @@ import (
 )
 
 type Action struct {
-	Sender int
+	Sender   int
 	Receiver int
-	Name string
+	Name     string
+}
+
+type FaultManager interface {
+	ApplyFaults(message *network.Message) error
 }
 
 type TestEngine struct {
-	Config *config.Config
-	Scheduler scheduling.Scheduler
+	Config         *config.Config
+	Scheduler      scheduling.Scheduler
 	NetworkManager *network.Manager
 	ProcessManager *process.ProcessManager
-	Log *log.Logger
+	FaultManager   FaultManager
+	Log            *log.Logger
 
-	Experiments int
-	Iterations  int
-	Steps	    int
+	Experiments   int
+	Iterations    int
+	Steps         int
 	SleepDuration time.Duration
-	ReplicaIds	[]int
+	ReplicaIds    []int
 }
 
 func (te *TestEngine) Init(config *config.Config) {
@@ -45,12 +51,12 @@ func (te *TestEngine) Init(config *config.Config) {
 		te.ReplicaIds[i] = i
 	}
 
-
 	te.Scheduler = scheduling.NewScheduler(scheduling.SchedulerType(config.SchedulerConfig.Type))
 	te.NetworkManager = new(network.Manager)
 	// te.NetworkManager.Init(config)
 	te.ProcessManager = new(process.ProcessManager)
 	// te.ProcessManager.Init(config, te.Iterations)
+	te.FaultManager = new(faults.FaultManager)
 
 	te.Log = log.New(os.Stdout, "[TestEngine] ", log.LstdFlags)
 }
@@ -93,12 +99,12 @@ func (te *TestEngine) Run() error {
 				if action != 0 {
 					te.NetworkManager.SendMessage(actions[action].MessageId)
 					schedule = append(schedule, Action{
-						Sender: actions[action].Sender,
+						Sender:   actions[action].Sender,
 						Receiver: actions[action].Receiver,
-						Name: actions[action].Name,
+						Name:     actions[action].Name,
 					})
 				}
-				
+
 				// TODO - Execute fault and append to schedule
 
 				time.Sleep(te.SleepDuration)

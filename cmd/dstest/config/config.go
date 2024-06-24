@@ -14,9 +14,9 @@ import (
 var defaultConfiguration []byte
 
 type TestConfig struct {
-	Name        string
-	Experiments int
-	Iterations  int
+	Name         string
+	Experiments  int
+	Iterations   int
 	WaitDuration int
 }
 
@@ -33,13 +33,20 @@ type NetworkConfig struct {
 	Protocol            string
 }
 
+type FaultConfig struct {
+	Faults []struct {
+		Type   string
+		Params any
+	}
+}
+
 type ProcessConfig struct {
 	NumReplicas   int
-	Timeout 	  int
-	OutputDir	  string
+	Timeout       int
+	OutputDir     string
 	ReplicaScript string
 	ClientScripts []string
-	CleanScript	  string
+	CleanScript   string
 	ReplicaParams []string
 }
 
@@ -47,6 +54,7 @@ type Config struct {
 	TestConfig      *TestConfig
 	SchedulerConfig *SchedulerConfig
 	NetworkConfig   *NetworkConfig
+	FaultConfig     *FaultConfig
 	ProcessConfig   *ProcessConfig
 }
 
