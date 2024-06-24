@@ -1,7 +1,6 @@
 package config
 
 import (
-	"bytes"
 	_ "embed"
 	"os"
 	"path/filepath"
@@ -9,9 +8,6 @@ import (
 
 	"github.com/spf13/viper"
 )
-
-//go:embed config.yml
-var defaultConfiguration []byte
 
 type TestConfig struct {
 	Name        string
@@ -63,14 +59,15 @@ func ModifyFilepath(config *Config) {
 func Read() (*Config, error) {
 	// Environment variables
 	viper.AutomaticEnv()
-	viper.SetEnvPrefix("APP")
+	//viper.SetEnvPrefix("APP")
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_"))
 
 	// Configuration file type
+	viper.SetConfigFile(viper.GetString("config"))
 	viper.SetConfigType("yml")
 
 	// Read configuration
-	if err := viper.ReadConfig(bytes.NewBuffer(defaultConfiguration)); err != nil {
+	if err := viper.ReadInConfig(); err != nil {
 		return nil, err
 	}
 
