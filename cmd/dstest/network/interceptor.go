@@ -2,6 +2,7 @@ package network
 
 import (
 	"errors"
+	"fmt"
 	"log"
 )
 
@@ -34,4 +35,18 @@ func (ni *BaseInterceptor) Run() (err error) {
 	}
 
 	return nil
+}
+
+// Factory method to create an interceptor from a given string
+func createInterceptor(interceptorType string) (Interceptor, error) {
+	switch interceptorType {
+	case "http2c":
+		return new(Http2CInterceptor), nil
+	case "http":
+		return new(HttpInterceptor), nil
+	case "tcp":
+		return new(TCPInterceptor), nil
+	default:
+		return nil, errors.New(fmt.Sprintf("Unknown interceptor type: %s", interceptorType))
+	}
 }

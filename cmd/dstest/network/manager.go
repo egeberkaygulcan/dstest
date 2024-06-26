@@ -1,6 +1,7 @@
 package network
 
 import (
+	"fmt"
 	"log"
 	"sync"
 	"sync/atomic"
@@ -15,14 +16,15 @@ type Manager struct {
 	Router        *Router
 	Interceptors  []Interceptor
 	MessageQueues []*MessageQueue
-	index atomic.Uint64
-	WaitGroup	  sync.WaitGroup
-	ReplicaIds []int
+	index         atomic.Uint64
+	WaitGroup     sync.WaitGroup
+	ReplicaIds    []int
 
 	// Scheduler     scheduling.Scheduler
 }
 
-func (nm *Manager) Init(config *config.Config, replicaIds []int) {
+func (nm *Manager) Init(config *config.Config, replicaIds []int) error {
+
 	numReplicas := config.ProcessConfig.NumReplicas
 
 	nm.Config = config
@@ -37,7 +39,12 @@ func (nm *Manager) Init(config *config.Config, replicaIds []int) {
 	// create the interceptors and message queues
 	for i := 0; i < numReplicas; i++ {
 		nm.MessageQueues[i] = new(MessageQueue)
-		nm.Interceptors[i] = new(Http2CInterceptor)
+		var err error = nil
+		nm.Interceptors[i], err = createInterceptor(config.NetworkConfig.Protocol)
+		if err != nil {
+			return fmt.Errorf("Error creating interceptor: %s", err.Error())
+		}
+
 		nm.MessageQueues[i].Init()
 		nm.Interceptors[i].Init(i, nm.Config.NetworkConfig.BaseInterceptorPort+i, nm)
 	}
@@ -46,6 +53,7 @@ func (nm *Manager) Init(config *config.Config, replicaIds []int) {
 	nm.Log = log.New(log.Writer(), "[NetworkManager] ", log.LstdFlags)
 
 	nm.Log.Println("Network manager initialized")
+	return nil
 }
 
 func (nm *Manager) Run() {
@@ -69,7 +77,7 @@ func (nm *Manager) Shutdown() {
 }
 
 func (nm *Manager) GenerateUniqueId() uint64 {
-	return nm.index.Add(1) 
+	return nm.index.Add(1)
 }
 
 func (nm *Manager) SendMessage(messageId uint64) {
@@ -87,13 +95,13 @@ func (nm *Manager) GetActions() []*Message {
 	var actions []*Message
 
 	delayMessage := &(Message{
-		Sender:   -1,
-		Receiver: -1,
-		Payload:  Http2CPayload{Request: nil, Writer: nil, Response: nil},
-		Type: "Delay",
-		Name: "Delay",
+		Sender:    -1,
+		Receiver:  -1,
+		Payload:   Http2CPayload{Request: nil, Writer: nil, Response: nil},
+		Type:      "Delay",
+		Name:      "Delay",
 		MessageId: nm.GenerateUniqueId(),
-		Send:     nil,
+		Send:      nil,
 	})
 	actions = append(actions, delayMessage)
 
