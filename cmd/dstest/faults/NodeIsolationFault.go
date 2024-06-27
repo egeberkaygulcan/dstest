@@ -6,19 +6,19 @@ import (
 	"github.com/egeberkaygulcan/dstest/cmd/dstest/faults/trigger"
 )
 
-type DummyFault struct {
+type NodeIsolationFault struct {
 	BaseFault
 }
 
-type DummyFaultParams struct {
+type NodeIsolationFaultParams struct {
 	name string
 	age  int
 }
 
-var _ Fault = (*DummyFault)(nil)
+var _ Fault = (*NodeIsolationFault)(nil)
 
-func NewDummyFault(params map[string]interface{}) (*DummyFault, error) {
-	fmt.Println("Creating a new DummyFault")
+func NewNodeIsolationFault(params map[string]interface{}) (*NodeIsolationFault, error) {
+	fmt.Println("Creating a new NodeIsolationFault")
 
 	if _, ok := params["name"]; !ok {
 		return nil, fmt.Errorf("name parameter is required")
@@ -28,14 +28,14 @@ func NewDummyFault(params map[string]interface{}) (*DummyFault, error) {
 		return nil, fmt.Errorf("age parameter is required")
 	}
 
-	parsedParams := &DummyFaultParams{
+	parsedParams := &NodeIsolationFaultParams{
 		name: params["name"].(string),
 		age:  params["age"].(int),
 	}
 
 	fmt.Println("Creating a new DummyFault with params: ", parsedParams)
 
-	return &DummyFault{
+	return &NodeIsolationFault{
 		BaseFault: BaseFault{
 			FaultTrigger:  &trigger.DummyFaultTrigger{},
 			FaultBehavior: &behavior.DummyFaultyBehavior{},

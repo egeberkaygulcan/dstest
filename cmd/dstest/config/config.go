@@ -32,7 +32,7 @@ type NetworkConfig struct {
 type FaultConfig struct {
 	Faults []struct {
 		Type   string
-		Params any
+		Params map[string]interface{}
 	}
 }
 

@@ -15,16 +15,20 @@ NetworkConfig:
 FaultConfig:
   Faults:
     - Type: "Dummy"
-      Params: {}
+      Params:
+        name: "Jimmy"
+        age: 42
     - Type: "Dummy"
-      Params: {}
-    - Type: "Partition"
-      Params: # these are mostly for testing, to see if the marshaller works
-        StartQuantity: 1
-        StartUnit: "Messages" # or "Seconds"
-        DurationQuantity: 3
-        DurationUnit: "Messages" # or "Seconds"
-        Nodes: [["n0", "n1"], ["n2", "n3"]]
+      Params:
+        name: "Alberto"
+        age: 33
+#    - Type: "Partition"
+#      Params: # these are mostly for testing, to see if the marshaller works
+#        StartQuantity: 1
+#        StartUnit: "Messages" # or "Seconds"
+#        DurationQuantity: 3
+#        DurationUnit: "Messages" # or "Seconds"
+#        Nodes: [["n0", "n1"], ["n2", "n3"]]
 ProcessConfig:
   NumReplicas: 3
   Timeout: 10
