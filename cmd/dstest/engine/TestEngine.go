@@ -21,8 +21,11 @@ type Action struct {
 	Name     string
 }
 
+// FIXME: Repetition of FaultManager interface to avoid cyclic import
+// how to avoid this?
 type FaultManager interface {
-	ApplyFaults(message *network.Message) error
+	Init(config *config.Config) error
+	ApplyFaults(context faults.FaultContext) error
 }
 
 type TestEngine struct {
@@ -73,6 +76,12 @@ func (te *TestEngine) Run() error {
 			err := te.NetworkManager.Init(te.Config, te.ReplicaIds)
 			if err != nil {
 				return fmt.Errorf("Error initializing NetworkManager: %s", err.Error())
+			}
+
+			// Initialize FaultManager
+			err = te.FaultManager.Init(te.Config)
+			if err != nil {
+				return fmt.Errorf("Error initializing FaultManager: %s", err.Error())
 			}
 
 			te.ProcessManager.Init(te.Config, te.ReplicaIds, j)
