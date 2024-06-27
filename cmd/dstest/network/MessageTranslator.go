@@ -3,7 +3,7 @@ package network
 import (
 	// "io"
 	"log"
-	"net/http/httputil"
+	// "net/http/httputil"
 	"os"
 	"strings"
 )
@@ -41,21 +41,36 @@ func (t *GRPCTranslator) Translate(message *Message) *Message {
 	// if err != nil {
 	// 	t.Log.Println("Body read error.")
 	// }
-	port := strings.Split(payload.Request.Host, ":")[1]
-	t.Log.Println("Request host port: " + port)
-	
+
 	var uri []string
 	if payload.Request != nil {
 		uri = strings.Split(payload.Request.URL.RequestURI(), "/")
 		message.Name = uri[len(uri)-1]
-	} else {
-		responseBody, err := httputil.DumpResponse(payload.Response, true)
-		if err != nil {
-			t.Log.Println("Could not dump payload request.")
-		}
 
-		t.Log.Println("Response payload: " + string(responseBody))
+		// requestBody, err := httputil.DumpRequest(payload.Request, true)
+		// if err != nil {
+		// 	t.Log.Println("Could not dump payload request.")
+		// }
+
+		// t.Log.Printf("Message sender: %d", message.Sender)
+		// t.Log.Printf("Message receiver: %d", message.Receiver)
+		// // t.Log.Println("Request payload: " + string(requestBody))
+
+		// body, _ := io.ReadAll(payload.Request.Body)
+		// t.Log.Println("Request body:")
+		// for i := 0; i < len(body); i++ {
+		// 	t.Log.Printf("%08b\n", body[i])
+		// }
+		// t.Log.Println("---------------")
 	}
+	// } else {
+	// 	responseBody, err := httputil.DumpResponse(payload.Response, true)
+	// 	if err != nil {
+	// 		t.Log.Println("Could not dump payload request.")
+	// 	}
+
+	// 	t.Log.Println("Response payload: " + string(responseBody))
+	// }
 	
 	return message
 }

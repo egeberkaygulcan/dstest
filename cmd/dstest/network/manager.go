@@ -9,6 +9,11 @@ import (
 	// "github.com/egeberkaygulcan/dstest/cmd/dstest/scheduling"
 )
 
+type SenderReceiverPair struct {
+	Sender int
+	Receiver int
+}
+
 type Manager struct {
 	Config        *config.Config
 	Log           *log.Logger
@@ -18,6 +23,7 @@ type Manager struct {
 	index atomic.Uint64
 	WaitGroup	  sync.WaitGroup
 	ReplicaIds []int
+	PortMap map[int]SenderReceiverPair
 
 	// Scheduler     scheduling.Scheduler
 }
@@ -27,7 +33,7 @@ func (nm *Manager) Init(config *config.Config, replicaIds []int) {
 
 	nm.Config = config
 	nm.Router = new(Router)
-	nm.Interceptors = make([]Interceptor, numReplicas)
+	nm.Interceptors = make([]Interceptor, numReplicas * (numReplicas - 1))
 	nm.MessageQueues = make([]*MessageQueue, numReplicas)
 	nm.ReplicaIds = replicaIds
 	// nm.Scheduler = new(scheduling.BasicScheduler)
@@ -35,11 +41,18 @@ func (nm *Manager) Init(config *config.Config, replicaIds []int) {
 	nm.Router.Init(nm, numReplicas)
 
 	// create the interceptors and message queues
+	nm.PortMap = make(map[int]SenderReceiverPair)
 	for i := 0; i < numReplicas; i++ {
 		nm.MessageQueues[i] = new(MessageQueue)
-		nm.Interceptors[i] = new(Http2CInterceptor)
 		nm.MessageQueues[i].Init()
-		nm.Interceptors[i].Init(i, nm.Config.NetworkConfig.BaseInterceptorPort+i, nm)
+		for j := 0; j < numReplicas; j++ {
+			if i != j {
+				id := i*numReplicas+j
+				nm.Interceptors[id] = new(Http2CInterceptor)
+				nm.Interceptors[id].Init(id, nm.Config.NetworkConfig.BaseInterceptorPort+id, nm)
+				nm.PortMap[nm.Config.NetworkConfig.BaseInterceptorPort+id] = SenderReceiverPair{Sender: i, Receiver: j}
+			}
+		}
 	}
 
 	// FIXME: This is a temporary solution to avoid nil pointer dereference

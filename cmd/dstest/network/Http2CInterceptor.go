@@ -83,7 +83,8 @@ func http2CRequestHandler(hi *Http2CInterceptor) http.HandlerFunc {
 		hi.Log.Printf("Received request from %s: %s\n", request.RemoteAddr, request.URL.Path)
 
 		// create connection to the node we're MITMing
-		thisNodePort := hi.ID + 6000
+		pair := hi.NetworkManager.PortMap[hi.Port]
+		thisNodePort :=  pair.Receiver + hi.NetworkManager.Config.NetworkConfig.BaseReplicaPort
 		thisNodeAddr := fmt.Sprintf("localhost:%d", thisNodePort)
 		//hi.Log.Printf("Connecting to actual node: %s\n", thisNodeAddr)
 		client := http.Client{
@@ -120,8 +121,8 @@ func http2CRequestHandler(hi *Http2CInterceptor) http.HandlerFunc {
 		// queue the request in the network manager
 		awaitSendRequest := make(chan struct{})
 		hi.NetworkManager.Router.QueueMessage(&Message{
-			Sender:   -1,
-			Receiver: thisNodePort - 6000,
+			Sender:   pair.Sender,
+			Receiver: pair.Receiver,
 			Payload:  Http2CPayload{Request: proxyRequest, Writer: w, Response: nil},
 			Type: "",
 			Name: "",
@@ -153,17 +154,17 @@ func http2CRequestHandler(hi *Http2CInterceptor) http.HandlerFunc {
 		}
 
 		// queue sending the response in the network manager
-		awaitSendResponse := make(chan struct{})
+		// awaitSendResponse := make(chan struct{})
 		// TODO - Do we need to queue this?
-		hi.NetworkManager.Router.QueueMessage(&Message{
-			Sender:   -1,
-			Receiver: thisNodePort - 6000,// TODO - Remove the hard coded port
-			Payload:  Http2CPayload{Response: resp, Writer: w, Request: nil},
-			Type: "",
-			Name: "",
-			MessageId: hi.NetworkManager.GenerateUniqueId(),
-			Send:     awaitSendResponse,
-		})
+		// hi.NetworkManager.Router.QueueMessage(&Message{
+		// 	Sender:   -1,
+		// 	Receiver: thisNodePort - hi.NetworkManager.Config.NetworkConfig.BaseReplicaPort,
+		// 	Payload:  Http2CPayload{Response: resp, Writer: w, Request: nil},
+		// 	Type: "",
+		// 	Name: "",
+		// 	MessageId: hi.NetworkManager.GenerateUniqueId(),
+		// 	Send:     awaitSendResponse,
+		// })
 		//<-awaitSendResponse
 
 		// send the response
