@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/egeberkaygulcan/dstest/cmd/dstest/config"
 	"github.com/egeberkaygulcan/dstest/cmd/dstest/network"
+	"github.com/egeberkaygulcan/dstest/cmd/dstest/process"
 	"strings"
 )
 
@@ -46,10 +47,10 @@ func (fm *FaultManager) AddFault(f Fault) {
 }
 
 // ApplyFaults applies all the faults in the list of faults
-func (fm *FaultManager) ApplyFaults(message *network.Message) error {
+func (fm *FaultManager) ApplyFaults(context FaultContext) error {
 	for e := fm.Faults.Front(); e != nil; e = e.Next() {
 		f := e.Value.(Fault)
-		err := f.ApplyBehaviorIfTriggered(message)
+		err := f.ApplyBehaviorIfTriggered(context)
 		if err != nil {
 			return err
 		}
@@ -63,4 +64,10 @@ func (fm *FaultManager) PrintFaults() {
 		f := e.Value.(Fault)
 		fmt.Println("Fault: ", f)
 	}
+}
+
+type Context interface {
+	GetConfig() *config.Config
+	GetNetworkManager() *network.Manager
+	GetProcessManager() *process.ProcessManager
 }

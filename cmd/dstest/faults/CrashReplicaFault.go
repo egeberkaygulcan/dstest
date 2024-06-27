@@ -4,19 +4,24 @@ import (
 	"fmt"
 )
 
-type NodeIsolationFault struct {
+/**
+The behavior is to call the CrashReplica method in process/process.go
+Also make another fault for restarting a replica!! ;-)
+*/
+
+type CrashReplicaFault struct {
 	BaseFault
 }
 
-type NodeIsolationFaultParams struct {
+type CrashReplicaFaultParams struct {
 	name string
 	age  int
 }
 
-var _ Fault = (*NodeIsolationFault)(nil)
+var _ Fault = (*CrashReplicaFault)(nil)
 
-func NewNodeIsolationFault(params map[string]interface{}) (*NodeIsolationFault, error) {
-	fmt.Println("Creating a new NodeIsolationFault")
+func NewCrashReplicaFault(params map[string]interface{}) (*CrashReplicaFault, error) {
+	fmt.Println("Creating a new CrashReplicaFault")
 
 	if _, ok := params["name"]; !ok {
 		return nil, fmt.Errorf("name parameter is required")
@@ -31,9 +36,9 @@ func NewNodeIsolationFault(params map[string]interface{}) (*NodeIsolationFault, 
 		age:  params["age"].(int),
 	}
 
-	fmt.Println("Creating a new DummyFault with params: ", parsedParams)
+	fmt.Println("Creating a new CrashReplica with params: ", parsedParams)
 
-	return &NodeIsolationFault{
+	return &CrashReplicaFault{
 		BaseFault: BaseFault{
 			FaultTrigger:  &DummyFaultTrigger{},
 			FaultBehavior: &DummyFaultyBehavior{},

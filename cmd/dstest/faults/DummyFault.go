@@ -2,8 +2,6 @@ package faults
 
 import (
 	"fmt"
-	"github.com/egeberkaygulcan/dstest/cmd/dstest/faults/behavior"
-	"github.com/egeberkaygulcan/dstest/cmd/dstest/faults/trigger"
 )
 
 type DummyFault struct {
@@ -37,8 +35,8 @@ func NewDummyFault(params map[string]interface{}) (*DummyFault, error) {
 
 	return &DummyFault{
 		BaseFault: BaseFault{
-			FaultTrigger:  &trigger.DummyFaultTrigger{},
-			FaultBehavior: &behavior.DummyFaultyBehavior{},
+			FaultTrigger:  &DummyFaultTrigger{},
+			FaultBehavior: &DummyFaultyBehavior{},
 		},
 	}, nil
 }

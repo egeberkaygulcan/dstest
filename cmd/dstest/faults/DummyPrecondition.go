@@ -1,4 +1,4 @@
-package trigger
+package faults
 
 type DummyFaultTrigger struct {
 }
