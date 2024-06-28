@@ -1,6 +1,7 @@
 package scheduling
 
 import (
+	"github.com/egeberkaygulcan/dstest/cmd/dstest/faults"
 	"github.com/egeberkaygulcan/dstest/cmd/dstest/network"
 )
 
@@ -8,7 +9,8 @@ type Scheduler interface {
 	Init()
 	Reset()
 	Shutdown()
-	Next([]*network.Message) int
+	Next([]*network.Message, []*faults.Fault) int
+	ApplyFault(*faults.Fault) error
 }
 
 type SchedulerType string

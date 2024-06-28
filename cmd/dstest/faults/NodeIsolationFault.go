@@ -31,12 +31,12 @@ func NewNodeIsolationFault(params map[string]interface{}) (*NodeIsolationFault, 
 		age:  params["age"].(int),
 	}
 
-	fmt.Println("Creating a new DummyFault with params: ", parsedParams)
+	fmt.Println("Creating a new NodeIsolationFault with params: ", parsedParams)
 
 	return &NodeIsolationFault{
 		BaseFault: BaseFault{
-			FaultTrigger:  &DummyFaultTrigger{},
-			FaultBehavior: &DummyFaultyBehavior{},
+			Precondition: &AlwaysEnabledPrecondition{},
+			Behavior:     &DummyFaultyBehavior{},
 		},
 	}, nil
 }

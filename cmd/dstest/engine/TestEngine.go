@@ -25,7 +25,10 @@ type Action struct {
 // how to avoid this?
 type FaultManager interface {
 	Init(config *config.Config) error
+	GetFaults() []*faults.Fault
+	GetEnabledFaults() []*faults.Fault
 	ApplyFaults(context faults.FaultContext) error
+	PrintFaults()
 }
 
 type TestEngine struct {
@@ -43,7 +46,7 @@ type TestEngine struct {
 	ReplicaIds    []int
 }
 
-func (te *TestEngine) Init(config *config.Config) {
+func (te *TestEngine) Init(config *config.Config) error {
 	te.Config = config
 	te.Experiments = config.TestConfig.Experiments
 	te.Iterations = config.TestConfig.Iterations
@@ -62,6 +65,8 @@ func (te *TestEngine) Init(config *config.Config) {
 	te.FaultManager = new(faults.FaultManager)
 
 	te.Log = log.New(os.Stdout, "[TestEngine] ", log.LstdFlags)
+
+	return nil
 }
 
 func (te *TestEngine) Run() error {
@@ -104,7 +109,7 @@ func (te *TestEngine) Run() error {
 			for s := 0; s < te.Steps; s++ {
 				actions := te.NetworkManager.GetActions()
 				// TODO - Get fault from scheduler
-				action := te.Scheduler.Next(actions)
+				action := te.Scheduler.Next(actions, te.FaultManager.GetFaults())
 				if action != 0 {
 					te.NetworkManager.SendMessage(actions[action].MessageId)
 					schedule = append(schedule, Action{

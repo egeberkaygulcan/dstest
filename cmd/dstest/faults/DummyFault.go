@@ -16,12 +16,9 @@ type DummyFaultParams struct {
 var _ Fault = (*DummyFault)(nil)
 
 func NewDummyFault(params map[string]interface{}) (*DummyFault, error) {
-	fmt.Println("Creating a new DummyFault")
-
 	if _, ok := params["name"]; !ok {
 		return nil, fmt.Errorf("name parameter is required")
 	}
-
 	if _, ok := params["age"]; !ok {
 		return nil, fmt.Errorf("age parameter is required")
 	}
@@ -35,8 +32,8 @@ func NewDummyFault(params map[string]interface{}) (*DummyFault, error) {
 
 	return &DummyFault{
 		BaseFault: BaseFault{
-			FaultTrigger:  &DummyFaultTrigger{},
-			FaultBehavior: &DummyFaultyBehavior{},
+			Precondition: &DummyFaultTrigger{},
+			Behavior:     &DummyFaultyBehavior{},
 		},
 	}, nil
 }

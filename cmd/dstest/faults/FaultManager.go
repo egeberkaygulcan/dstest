@@ -33,7 +33,7 @@ func (fm *FaultManager) Init(config *config.Config) error {
 		fmt.Println("Going to create a fault: ", f.Type)
 		fault, err := NewFault(f.Type, f.Params)
 		if err != nil {
-			return fmt.Errorf("error creating fault: %v", err)
+			return fmt.Errorf("error creating %s fault: %v", f.Type, err)
 		}
 		fm.AddFault(fault)
 	}
@@ -58,11 +58,37 @@ func (fm *FaultManager) ApplyFaults(context FaultContext) error {
 	return nil
 }
 
+// GetFaults returns all the faults in the list of faults
+func (fm *FaultManager) GetFaults() []*Fault {
+	faults := make([]*Fault, fm.Faults.Len())
+	for e := fm.Faults.Front(); e != nil; e = e.Next() {
+		f := e.Value.(Fault)
+		faults = append(faults, &f)
+	}
+	return faults
+}
+
+// GetEnabledFaults returns all the enabled faults in the list of faults
+func (fm *FaultManager) GetEnabledFaults() []*Fault {
+	faults := make([]*Fault, 0)
+	for e := fm.Faults.Front(); e != nil; e = e.Next() {
+		f := e.Value.(Fault)
+		enabled, err := f.IsEnabled()
+		if err != nil {
+			fmt.Println("Error getting enabled status of fault: ", err)
+		}
+		if enabled {
+			faults = append(faults, &f)
+		}
+	}
+	return faults
+}
+
 // PrintFaults prints all the faults in the list of faults
 func (fm *FaultManager) PrintFaults() {
 	for e := fm.Faults.Front(); e != nil; e = e.Next() {
 		f := e.Value.(Fault)
-		fmt.Println("Fault: ", f)
+		fmt.Printf("Fault: %+v\n", f)
 	}
 }
 

@@ -1,5 +1,6 @@
 package faults
 
-type FaultBehavior interface {
+type Behavior interface {
 	Apply(message FaultContext) error
+	String() string
 }

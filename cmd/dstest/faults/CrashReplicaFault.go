@@ -4,44 +4,33 @@ import (
 	"fmt"
 )
 
-/**
-The behavior is to call the CrashReplica method in process/process.go
-Also make another fault for restarting a replica!! ;-)
-*/
-
 type CrashReplicaFault struct {
+	nodeId int
 	BaseFault
 }
 
 type CrashReplicaFaultParams struct {
-	name string
-	age  int
+	nodeId int
 }
 
 var _ Fault = (*CrashReplicaFault)(nil)
 
-func NewCrashReplicaFault(params map[string]interface{}) (*CrashReplicaFault, error) {
-	fmt.Println("Creating a new CrashReplicaFault")
-
-	if _, ok := params["name"]; !ok {
-		return nil, fmt.Errorf("name parameter is required")
+func NewCrashReplicaFault(context FaultContext, params map[string]interface{}) (*CrashReplicaFault, error) {
+	if _, ok := params["nodeId"]; !ok {
+		return nil, fmt.Errorf("nodeId parameter is required")
 	}
 
-	if _, ok := params["age"]; !ok {
-		return nil, fmt.Errorf("age parameter is required")
+	parsedParams := &CrashReplicaFaultParams{
+		nodeId: params["nodeId"].(int),
 	}
-
-	parsedParams := &NodeIsolationFaultParams{
-		name: params["name"].(string),
-		age:  params["age"].(int),
-	}
-
-	fmt.Println("Creating a new CrashReplica with params: ", parsedParams)
 
 	return &CrashReplicaFault{
 		BaseFault: BaseFault{
-			FaultTrigger:  &DummyFaultTrigger{},
-			FaultBehavior: &DummyFaultyBehavior{},
+			Precondition: &AlwaysEnabledPrecondition{},
+			Behavior: &CrashReplicaBehavior{
+				nodeId: parsedParams.nodeId,
+			},
 		},
+		nodeId: -1,
 	}, nil
 }
