@@ -16,7 +16,7 @@ type FaultContext interface {
 
 type Fault interface {
 	IsEnabled() (bool, error)
-	ApplyBehaviorIfTriggered(context FaultContext) error
+	ApplyBehaviorIfPreconditionMet(context FaultContext) error
 	String() string
 }
 
@@ -32,7 +32,7 @@ type BaseFault struct {
 
 var _ Fault = (*BaseFault)(nil)
 
-func (f *BaseFault) ApplyBehaviorIfTriggered(context FaultContext) error {
+func (f *BaseFault) ApplyBehaviorIfPreconditionMet(context FaultContext) error {
 	triggered, err := f.Satisfies()
 	if err != nil {
 		return err

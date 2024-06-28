@@ -15,7 +15,7 @@ func NewRestartReplicaBehavior(nodeId int) *RestartReplicaBehavior {
 }
 
 func (fb *RestartReplicaBehavior) Apply(context FaultContext) error {
-	// do nothing
+	context.GetProcessManager().RestartReplica(fb.nodeId)
 	return nil
 }
 

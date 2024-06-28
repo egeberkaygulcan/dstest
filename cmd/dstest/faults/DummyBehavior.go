@@ -1,13 +1,13 @@
 package faults
 
-type DummyFaultyBehavior struct {
+type DummyBehavior struct {
 }
 
-func (fb *DummyFaultyBehavior) Apply(context FaultContext) error {
+func (fb *DummyBehavior) Apply(context FaultContext) error {
 	// do nothing
 	return nil
 }
 
-func (fb *DummyFaultyBehavior) String() string {
+func (fb *DummyBehavior) String() string {
 	return "do nothing"
 }

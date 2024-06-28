@@ -9,8 +9,7 @@ type NodeIsolationFault struct {
 }
 
 type NodeIsolationFaultParams struct {
-	name string
-	age  int
+	nodeId int
 }
 
 var _ Fault = (*NodeIsolationFault)(nil)
@@ -18,17 +17,12 @@ var _ Fault = (*NodeIsolationFault)(nil)
 func NewNodeIsolationFault(params map[string]interface{}) (*NodeIsolationFault, error) {
 	fmt.Println("Creating a new NodeIsolationFault")
 
-	if _, ok := params["name"]; !ok {
-		return nil, fmt.Errorf("name parameter is required")
-	}
-
-	if _, ok := params["age"]; !ok {
-		return nil, fmt.Errorf("age parameter is required")
+	if _, ok := params["nodeId"]; !ok {
+		return nil, fmt.Errorf("nodeId parameter is required")
 	}
 
 	parsedParams := &NodeIsolationFaultParams{
-		name: params["name"].(string),
-		age:  params["age"].(int),
+		nodeId: params["nodeId"].(int),
 	}
 
 	fmt.Println("Creating a new NodeIsolationFault with params: ", parsedParams)
@@ -36,7 +30,9 @@ func NewNodeIsolationFault(params map[string]interface{}) (*NodeIsolationFault, 
 	return &NodeIsolationFault{
 		BaseFault: BaseFault{
 			Precondition: &AlwaysEnabledPrecondition{},
-			Behavior:     &DummyFaultyBehavior{},
+			Behavior: &IsolateNodeBehavior{
+				nodeId: parsedParams.nodeId,
+			},
 		},
 	}, nil
 }

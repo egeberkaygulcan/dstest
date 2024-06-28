@@ -1,15 +1,15 @@
 package faults
 
-type DummyFaultTrigger struct {
+type DummyPrecondition struct {
 }
 
-//var _ faults.Precondition = (*DummyFaultTrigger)(nil)
+//var _ faults.Precondition = (*DummyPrecondition)(nil)
 
-func (ft *DummyFaultTrigger) Satisfies() (bool, error) {
+func (ft *DummyPrecondition) Satisfies() (bool, error) {
 	// never triggered
 	return false, nil
 }
 
-func (ft *DummyFaultTrigger) String() string {
+func (ft *DummyPrecondition) String() string {
 	return "false"
 }

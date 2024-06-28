@@ -50,7 +50,7 @@ func (fm *FaultManager) AddFault(f Fault) {
 func (fm *FaultManager) ApplyFaults(context FaultContext) error {
 	for e := fm.Faults.Front(); e != nil; e = e.Next() {
 		f := e.Value.(Fault)
-		err := f.ApplyBehaviorIfTriggered(context)
+		err := f.ApplyBehaviorIfPreconditionMet(context)
 		if err != nil {
 			return err
 		}

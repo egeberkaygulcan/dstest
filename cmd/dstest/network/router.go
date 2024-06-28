@@ -58,8 +58,8 @@ func (r *Router) QueueMessage(m *Message) {
 	/*
 		// go through the faults
 		for _, fault := range faults {
-			// apply the fault if triggered
-			err := fault.ApplyBehaviorIfTriggered(*m)
+			// apply the fault if precondition is satisfied
+			err := fault.ApplyBehaviorIfPreconditionMet(*m)
 			if err != nil {
 				r.Log.Printf("Error applying fault: %s\n", err.Error())
 			}

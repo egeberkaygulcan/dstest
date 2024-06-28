@@ -32,8 +32,8 @@ func NewDummyFault(params map[string]interface{}) (*DummyFault, error) {
 
 	return &DummyFault{
 		BaseFault: BaseFault{
-			Precondition: &DummyFaultTrigger{},
-			Behavior:     &DummyFaultyBehavior{},
+			Precondition: &DummyPrecondition{},
+			Behavior:     &DummyBehavior{},
 		},
 	}, nil
 }
