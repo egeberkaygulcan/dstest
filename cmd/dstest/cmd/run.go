@@ -31,7 +31,11 @@ var runCmd = &cobra.Command{
 		fmt.Println("Name: " + cfg.TestConfig.Name)
 
 		te := new(engine.TestEngine)
-		te.Init(cfg)
+		err = te.Init(cfg)
+		if err != nil {
+			log.Fatal(err.Error())
+			return
+		}
 
 		te.Run()
 	},
