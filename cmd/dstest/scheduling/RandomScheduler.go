@@ -11,6 +11,9 @@ type RandomScheduler struct {
 	Scheduler
 }
 
+// confirm it satisfies the interface Scheduler
+var _ Scheduler = (*RandomScheduler)(nil)
+
 func (s *RandomScheduler) Init() {
 
 }
@@ -23,7 +26,7 @@ func (s *RandomScheduler) Shutdown() {
 }
 
 // Next returns a random index from available messages
-func (s *RandomScheduler) Next(messages []*network.Message, faults []*faults.Fault) int {
+func (s *RandomScheduler) Next(messages []*network.Message, faults []*faults.Fault, ctx faults.FaultContext) int {
 	// Apply faults with a probability of 1%
 	if rand.Float64() < 0.01 {
 		// Apply fault

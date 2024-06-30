@@ -9,7 +9,7 @@ type Scheduler interface {
 	Init()
 	Reset()
 	Shutdown()
-	Next([]*network.Message, []*faults.Fault) int
+	Next([]*network.Message, []*faults.Fault, faults.FaultContext) int
 	ApplyFault(*faults.Fault) error
 }
 
