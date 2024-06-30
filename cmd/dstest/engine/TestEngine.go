@@ -27,7 +27,6 @@ type FaultManager interface {
 	Init(config *config.Config) error
 	GetFaults() []*faults.Fault
 	GetEnabledFaults() []*faults.Fault
-	ApplyFaults(context faults.FaultContext) error
 	PrintFaults()
 }
 
@@ -64,6 +63,10 @@ func (te *TestEngine) Init(config *config.Config) error {
 	// te.ProcessManager.Init(config, te.Iterations)
 	te.FaultManager = new(faults.FaultManager)
 
+	if err := te.FaultManager.Init(config); err != nil {
+		return fmt.Errorf("Error initializing FaultManager: %s", err.Error())
+	}
+
 	te.Log = log.New(os.Stdout, "[TestEngine] ", log.LstdFlags)
 
 	return nil
@@ -88,6 +91,9 @@ func (te *TestEngine) Run() error {
 			if err != nil {
 				return fmt.Errorf("Error initializing FaultManager: %s", err.Error())
 			}
+			// print all faults
+			fmt.Println("\nFaults:")
+			te.FaultManager.PrintFaults()
 
 			te.ProcessManager.Init(te.Config, te.ReplicaIds, j)
 			var wg sync.WaitGroup
@@ -109,7 +115,8 @@ func (te *TestEngine) Run() error {
 			for s := 0; s < te.Steps; s++ {
 				actions := te.NetworkManager.GetActions()
 				// TODO - Get fault from scheduler
-				action := te.Scheduler.Next(actions, te.FaultManager.GetFaults())
+				var faultContext faults.FaultContext = NewEngineFaultContext(te)
+				action := te.Scheduler.Next(actions, te.FaultManager.GetFaults(), faultContext)
 				if action != 0 {
 					te.NetworkManager.SendMessage(actions[action].MessageId)
 					schedule = append(schedule, Action{
@@ -149,3 +156,26 @@ func (te *TestEngine) Run() error {
 	}
 	return nil
 }
+
+type EngineFaultContext struct {
+	engine *TestEngine
+}
+
+func NewEngineFaultContext(engine *TestEngine) *EngineFaultContext {
+	return &EngineFaultContext{engine: engine}
+}
+
+func (efc *EngineFaultContext) GetConfig() *config.Config {
+	return efc.engine.Config
+}
+
+func (efc *EngineFaultContext) GetNetworkManager() *network.Manager {
+	return efc.engine.NetworkManager
+}
+
+func (efc *EngineFaultContext) GetProcessManager() *process.ProcessManager {
+	return efc.engine.ProcessManager
+}
+
+// confirm that EngineFaultContext implements FaultContext
+var _ faults.FaultContext = (*EngineFaultContext)(nil)
