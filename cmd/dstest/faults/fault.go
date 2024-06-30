@@ -8,7 +8,6 @@ import (
 )
 
 type FaultContext interface {
-	GetMessage() *network.Message
 	GetConfig() *config.Config
 	GetNetworkManager() *network.Manager
 	GetProcessManager() *process.ProcessManager
@@ -16,7 +15,7 @@ type FaultContext interface {
 
 type Fault interface {
 	IsEnabled() (bool, error)
-	ApplyBehaviorIfPreconditionMet(context FaultContext) error
+	ApplyBehaviorIfPreconditionMet(context *FaultContext) error
 	String() string
 }
 
@@ -32,7 +31,7 @@ type BaseFault struct {
 
 var _ Fault = (*BaseFault)(nil)
 
-func (f *BaseFault) ApplyBehaviorIfPreconditionMet(context FaultContext) error {
+func (f *BaseFault) ApplyBehaviorIfPreconditionMet(context *FaultContext) error {
 	triggered, err := f.Satisfies()
 	if err != nil {
 		return err

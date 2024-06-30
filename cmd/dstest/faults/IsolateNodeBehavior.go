@@ -6,8 +6,8 @@ type IsolateNodeBehavior struct {
 	nodeId int
 }
 
-func (fb *IsolateNodeBehavior) Apply(context FaultContext) error {
-	context.GetNetworkManager().Router.IsolateNode(fb.nodeId)
+func (fb *IsolateNodeBehavior) Apply(context *FaultContext) error {
+	(*context).GetNetworkManager().Router.IsolateNode(fb.nodeId)
 	return nil
 }
 

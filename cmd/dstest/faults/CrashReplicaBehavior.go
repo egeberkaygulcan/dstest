@@ -14,8 +14,8 @@ func NewCrashReplicaBehavior(nodeId int) *CrashReplicaBehavior {
 	}
 }
 
-func (fb *CrashReplicaBehavior) Apply(context FaultContext) error {
-	context.GetProcessManager().CrashReplica(fb.nodeId)
+func (fb *CrashReplicaBehavior) Apply(context *FaultContext) error {
+	(*context).GetProcessManager().CrashReplica(fb.nodeId)
 	return nil
 }
 

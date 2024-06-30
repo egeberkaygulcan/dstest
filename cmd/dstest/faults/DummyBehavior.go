@@ -3,7 +3,7 @@ package faults
 type DummyBehavior struct {
 }
 
-func (fb *DummyBehavior) Apply(context FaultContext) error {
+func (fb *DummyBehavior) Apply(context *FaultContext) error {
 	// do nothing
 	return nil
 }

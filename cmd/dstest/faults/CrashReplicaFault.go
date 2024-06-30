@@ -10,25 +10,25 @@ type CrashReplicaFault struct {
 }
 
 type CrashReplicaFaultParams struct {
-	nodeId int
+	node int
 }
 
 var _ Fault = (*CrashReplicaFault)(nil)
 
-func NewCrashReplicaFault(context FaultContext, params map[string]interface{}) (*CrashReplicaFault, error) {
-	if _, ok := params["nodeId"]; !ok {
-		return nil, fmt.Errorf("nodeId parameter is required")
+func NewCrashReplicaFault(params map[string]interface{}) (*CrashReplicaFault, error) {
+	if _, ok := params["node"]; !ok {
+		return nil, fmt.Errorf("node parameter is required")
 	}
 
 	parsedParams := &CrashReplicaFaultParams{
-		nodeId: params["nodeId"].(int),
+		node: params["node"].(int),
 	}
 
 	return &CrashReplicaFault{
 		BaseFault: BaseFault{
 			Precondition: &AlwaysEnabledPrecondition{},
 			Behavior: &CrashReplicaBehavior{
-				nodeId: parsedParams.nodeId,
+				nodeId: parsedParams.node,
 			},
 		},
 		nodeId: -1,

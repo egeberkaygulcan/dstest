@@ -4,8 +4,6 @@ import (
 	"container/list"
 	"fmt"
 	"github.com/egeberkaygulcan/dstest/cmd/dstest/config"
-	"github.com/egeberkaygulcan/dstest/cmd/dstest/network"
-	"github.com/egeberkaygulcan/dstest/cmd/dstest/process"
 	"strings"
 )
 
@@ -18,6 +16,10 @@ func NewFault(Name string, Params map[string]interface{}) (Fault, error) {
 	switch strings.ToLower(Name) {
 	case "dummy":
 		return NewDummyFault(Params)
+	case "crash":
+		return NewCrashReplicaFault(Params)
+	case "restart":
+		return NewRestartReplicaFault(Params)
 	default:
 		return nil, fmt.Errorf("Fault '%s' not found", Name)
 	}
@@ -47,7 +49,7 @@ func (fm *FaultManager) AddFault(f Fault) {
 }
 
 // ApplyFaults applies all the faults in the list of faults
-func (fm *FaultManager) ApplyFaults(context FaultContext) error {
+func (fm *FaultManager) ApplyFaults(context *FaultContext) error {
 	for e := fm.Faults.Front(); e != nil; e = e.Next() {
 		f := e.Value.(Fault)
 		err := f.ApplyBehaviorIfPreconditionMet(context)
@@ -60,7 +62,7 @@ func (fm *FaultManager) ApplyFaults(context FaultContext) error {
 
 // GetFaults returns all the faults in the list of faults
 func (fm *FaultManager) GetFaults() []*Fault {
-	faults := make([]*Fault, fm.Faults.Len())
+	faults := make([]*Fault, 0)
 	for e := fm.Faults.Front(); e != nil; e = e.Next() {
 		f := e.Value.(Fault)
 		faults = append(faults, &f)
@@ -86,14 +88,9 @@ func (fm *FaultManager) GetEnabledFaults() []*Fault {
 
 // PrintFaults prints all the faults in the list of faults
 func (fm *FaultManager) PrintFaults() {
+	fmt.Println("Faults:")
 	for e := fm.Faults.Front(); e != nil; e = e.Next() {
 		f := e.Value.(Fault)
-		fmt.Printf("Fault: %+v\n", f)
+		fmt.Printf("\t- %+v\n", f)
 	}
-}
-
-type Context interface {
-	GetConfig() *config.Config
-	GetNetworkManager() *network.Manager
-	GetProcessManager() *process.ProcessManager
 }
