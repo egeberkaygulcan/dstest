@@ -31,8 +31,12 @@ func (s *RandomScheduler) Next(messages []*network.Message, faults []*faults.Fau
 	if rand.Float64() < 0.01 {
 		// Apply fault
 		faultIndex := rand.Intn(len(faults))
+		// print all faults passed
+		fmt.Println("Faults: ", faults)
 		fmt.Println("Applying fault: ", faults[faultIndex])
-		err := s.ApplyFault(faults[faultIndex])
+
+		err := (*faults[faultIndex]).ApplyBehaviorIfPreconditionMet(&ctx)
+
 		if err != nil {
 			return 0
 		}
