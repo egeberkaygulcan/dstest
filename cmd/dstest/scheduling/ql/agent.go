@@ -1,7 +1,9 @@
 package ql
 
 import (
+	"fmt"
 	"github.com/egeberkaygulcan/dstest/cmd/dstest/network"
+	"hash/fnv"
 	"math"
 	"math/rand"
 	"reflect"
@@ -23,6 +25,15 @@ type Agent struct {
 	r        *rand.Rand
 	table    Table
 	minAlpha float32
+}
+
+// HashState observations into an integer value. Note: this requires observations to always
+// occur in the same order.
+func HashState(observations *tensor.Dense) uint32 {
+	h := fnv.New32a()
+	s := fmt.Sprintf("%v", observations)
+	h.Write([]byte(s))
+	return h.Sum32()
 }
 
 // Hyperparameters for a Q-learning agent.
@@ -72,13 +83,12 @@ var DefaultAgentConfig = &AgentConfig{
 
 // NewAgent returns a new Q-learning agent.
 func NewAgent(c *AgentConfig, env *envv1.Env) *Agent {
-	actionSpaceSize := int(env.GetNumActions())
 	s := rand.NewSource(time.Now().Unix())
 	if c.Base == nil {
 		c.Base = DefaultAgentConfig.Base
 	}
 	if c.Table == nil || (reflect.ValueOf(c.Table).Kind() == reflect.Ptr && reflect.ValueOf(c.Table).IsNil()) {
-		c.Table = NewMemTable(actionSpaceSize)
+		c.Table = NewDynamicMemTable()
 	}
 	a := &Agent{
 		Hyperparameters: c.Hyperparameters,
