@@ -108,7 +108,7 @@ func http2CRequestHandler(hi *Http2CInterceptor) http.HandlerFunc {
 		// create a new url from the raw RequestURI sent by the client
 		url := fmt.Sprintf("http://localhost:%d%s", thisNodePort, request.RequestURI)
 
-		proxyRequest, err := http.NewRequest(request.Method, url, bytes.NewReader(body))
+		proxyRequest, err := http.NewRequest(request.Method, url, io.NopCloser(bytes.NewReader(body)))
 
 		// we may want to filter some headers, otherwise we could just use a shallow copy
 		// proxyRequest.Header = request.Header
