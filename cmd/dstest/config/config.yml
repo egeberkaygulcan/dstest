@@ -14,14 +14,19 @@ NetworkConfig:
   Protocol: "http2c"
 FaultConfig:
   Faults:
-    - Type: "Dummy"
+    - Type: dummy # does nothing
+      Params: {}
+    - Type: dummy
+      Params: {}
+    - Type: restart
       Params:
-        name: "Jimmy"
-        age: 42
-    - Type: "Dummy"
+        node: 0
+    - Type: restart
       Params:
-        name: "Alberto"
-        age: 33
+        node: 1
+    - Type: crash
+      Params:
+        node: 0
 #    - Type: "Partition"
 #      Params: # these are mostly for testing, to see if the marshaller works
 #        StartQuantity: 1
