@@ -43,7 +43,7 @@ RUN mvn clean package -DskipTests
 #   RUN apk --no-cache add ca-certificates
 #
 #FROM scratch
-FROM alpine:3.19.2
+FROM openjdk:17
 WORKDIR /root/
 COPY --from=builder /go/src/dstest /root/dstest
 COPY --from=ratis-builder /src/ratis /root/ratis
