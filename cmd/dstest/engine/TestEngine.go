@@ -55,14 +55,20 @@ func (te *TestEngine) Init(config *config.Config) {
 	te.Log = log.New(os.Stdout, "[TestEngine] ", log.LstdFlags)
 }
 
-func (te *TestEngine) Run() {
+func (te *TestEngine) Run() error {
 	for i := 0; i < te.Experiments; i++ {
 		te.Log.Printf("Starting experiment %d...\n", i)
 
 		te.Scheduler.Init()
 		for j := 0; j < te.Iterations; j++ {
 			te.Log.Printf("Starting iteration %d\n", j+1)
-			te.NetworkManager.Init(te.Config, te.ReplicaIds)
+
+			// Initialize NetworkManager
+			err := te.NetworkManager.Init(te.Config, te.ReplicaIds)
+			if err != nil {
+				return fmt.Errorf("Error initializing NetworkManager: %s", err.Error())
+			}
+
 			te.ProcessManager.Init(te.Config, te.ReplicaIds, j)
 			var wg sync.WaitGroup
 			wg.Add(1)
@@ -121,4 +127,5 @@ func (te *TestEngine) Run() {
 		}
 		te.Scheduler.Reset()
 	}
+	return nil
 }

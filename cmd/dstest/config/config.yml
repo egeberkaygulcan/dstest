@@ -11,6 +11,7 @@ SchedulerConfig: #TODO - Seperate the scheduler param
 NetworkConfig:
   BaseReplicaPort: 6000
   BaseInterceptorPort: 10000
+  Protocol: "http2c"
 ProcessConfig:
   NumReplicas: 3
   Timeout: 10
