@@ -26,10 +26,12 @@ RUN GOOS=linux GOARCH=amd64 \
     -o app cmd/dstest/main.go
 RUN go test -cover -v ./...
 
+# Clone Ratis
+RUN git clone https://github.com/apache/ratis.git /go/src/ratis
+
 ###############################################################################
 # Stage 2 (to create a downsized "container executable", ~5MB)                #
 ###############################################################################
-
 # If you need SSL certificates for HTTPS, replace `FROM SCRATCH` with:
 #
 #   FROM alpine:3.17.1
@@ -38,6 +40,7 @@ RUN go test -cover -v ./...
 FROM scratch
 WORKDIR /root/
 COPY --from=builder /go/src/dstest ./dstest
+COPY --from=builder /go/src/ratis ./ratis
 
 EXPOSE 8123
 ENTRYPOINT ["./dstest/app"]
