@@ -37,7 +37,7 @@ func (m *DynamicMemTable) Get(state uint32, action int) (float32, error) {
 	}
 	qValue, ok := qv[action]
 	if !ok {
-		return 0.0, fmt.Errorf("action %s does not exist in state %d", action, state)
+		return 0.0, fmt.Errorf("action %d does not exist in state %d", action, state)
 	}
 	return qValue, nil
 }
