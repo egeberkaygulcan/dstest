@@ -11,7 +11,7 @@ var _ Fault = (*DummyFault)(nil)
 
 func NewDummyFault(params map[string]interface{}) (*DummyFault, error) {
 
-	parsedParams := &DummyFaultParams{}
+	_ = &DummyFaultParams{}
 
 	return &DummyFault{
 		BaseFault: BaseFault{
