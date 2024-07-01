@@ -23,7 +23,7 @@ RUN GOOS=linux GOARCH=amd64 \
     go build \
     -trimpath \
     -ldflags="-w -s -X 'main.Version=${PROJECT_VERSION}'" \
-    -o app cmd/dstest/main.go
+    -o cmd/dstest/main cmd/dstest/main.go
 RUN go test -cover -v ./...
 
 # Clone Ratis
@@ -40,8 +40,10 @@ RUN git clone https://github.com/apache/ratis.git /go/src/ratis
 #FROM scratch
 FROM alpine:3.19.2
 WORKDIR /root/
-COPY --from=builder /go/src/dstest ./dstest
-COPY --from=builder /go/src/ratis ./ratis
+COPY --from=builder /go/src/dstest /root/dstest
+COPY --from=builder /go/src/ratis /root/ratis
 
 EXPOSE 8123
-ENTRYPOINT ["./dstest/app"]
+WORKDIR /root/dstest/cmd/dstest/
+ENTRYPOINT ["./main"]
+CMD ["run", "-c", "./config/config.yml"]
