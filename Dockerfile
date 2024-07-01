@@ -48,7 +48,7 @@ WORKDIR /root/
 COPY --from=builder /go/src/dstest /root/dstest
 COPY --from=ratis-builder /src/ratis /root/ratis
 
-EXPOSE 8123
+#EXPOSE 8123
 WORKDIR /root/dstest/cmd/dstest/
 ENTRYPOINT ["./main"]
 CMD ["run", "-c", "./config/config.yml"]
