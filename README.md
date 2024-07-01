@@ -7,8 +7,16 @@ DSTest is a Controlled Concurrency Testing Framework tool to test distributed sy
 ### Running via Docker (recommended)
 You'll need to [install Docker](https://docs.docker.com/get-docker/).
 
+#### Generating the image
+We are not publishing these at the moment, so you'll need to build the image yourself.
+```shell
+$ docker build -t egeberkaygulcan/dstest .
 ```
-TODO: containerization
+
+#### Running the image
+This will run the image with the default configuration for Apache Ratis.
+```shell
+$ docker run egeberkaygulcan/dstest
 ```
 
 ### Running from source
