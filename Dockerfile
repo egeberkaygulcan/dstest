@@ -13,8 +13,8 @@ RUN go version
 
 ARG PROJECT_VERSION
 
-COPY . /go/src/github.com/miguno/golang-docker-build-tutorial/
-WORKDIR /go/src/github.com/miguno/golang-docker-build-tutorial/
+COPY . /go/src/dstest/
+WORKDIR /go/src/dstest/
 RUN set -Eeux && \
     go mod download && \
     go mod verify
@@ -37,7 +37,7 @@ RUN go test -cover -v ./...
 #
 FROM scratch
 WORKDIR /root/
-COPY --from=builder /go/src/github.com/miguno/golang-docker-build-tutorial/app .
+COPY --from=builder /go/src/dstest ./dstest
 
 EXPOSE 8123
-ENTRYPOINT ["./app"]
+ENTRYPOINT ["./dstest/app"]
