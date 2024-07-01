@@ -37,7 +37,8 @@ RUN git clone https://github.com/apache/ratis.git /go/src/ratis
 #   FROM alpine:3.17.1
 #   RUN apk --no-cache add ca-certificates
 #
-FROM scratch
+#FROM scratch
+FROM alpine:3.19.2
 WORKDIR /root/
 COPY --from=builder /go/src/dstest ./dstest
 COPY --from=builder /go/src/ratis ./ratis
