@@ -26,8 +26,13 @@ RUN GOOS=linux GOARCH=amd64 \
     -o cmd/dstest/main cmd/dstest/main.go
 RUN go test -cover -v ./...
 
-# Clone Ratis
-RUN git clone https://github.com/apache/ratis.git /go/src/ratis
+###############################################################################
+# Stage 1b (Ratis)                                                            #
+###############################################################################
+FROM maven:3.9.8 AS ratis-builder
+RUN git clone https://github.com/apache/ratis.git /src/ratis
+WORKDIR /src/ratis
+RUN mvn clean package -DskipTests
 
 ###############################################################################
 # Stage 2 (to create a downsized "container executable", ~5MB)                #
@@ -41,7 +46,7 @@ RUN git clone https://github.com/apache/ratis.git /go/src/ratis
 FROM alpine:3.19.2
 WORKDIR /root/
 COPY --from=builder /go/src/dstest /root/dstest
-COPY --from=builder /go/src/ratis /root/ratis
+COPY --from=ratis-builder /src/ratis /root/ratis
 
 EXPOSE 8123
 WORKDIR /root/dstest/cmd/dstest/
