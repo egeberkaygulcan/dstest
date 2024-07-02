@@ -116,8 +116,10 @@ func (te *TestEngine) Run() error {
 				actions := te.NetworkManager.GetActions()
 				// TODO - Get fault from scheduler
 				var faultContext faults.FaultContext = NewEngineFaultContext(te)
-				action := te.Scheduler.Next(actions, te.FaultManager.GetFaults(), faultContext)
-				if action != 0 {
+				decision := te.Scheduler.Next(actions, te.FaultManager.GetFaults(), faultContext)
+
+				if decision.DecisionType == scheduling.SendMessage {
+					action := decision.Index
 					te.NetworkManager.SendMessage(actions[action].MessageId)
 					schedule = append(schedule, Action{
 						Sender:   actions[action].Sender,
@@ -126,7 +128,15 @@ func (te *TestEngine) Run() error {
 					})
 				}
 
-				// TODO - Execute fault and append to schedule
+				if decision.DecisionType == scheduling.InjectFault {
+					fault := te.FaultManager.GetFaults()[decision.Index]
+					te.Log.Printf("Applying fault: %s\n", fault)
+					err := (*fault).ApplyBehaviorIfPreconditionMet(&faultContext)
+					if err != nil {
+						te.Log.Printf("Error applying fault: %s\n", err)
+					}
+					// TODO - Append fault to schedule
+				}
 
 				time.Sleep(te.SleepDuration)
 			}

@@ -1,7 +1,6 @@
 package scheduling
 
 import (
-	"fmt"
 	"github.com/egeberkaygulcan/dstest/cmd/dstest/faults"
 	"github.com/egeberkaygulcan/dstest/cmd/dstest/network"
 	"math/rand"
@@ -26,21 +25,17 @@ func (s *RandomScheduler) Shutdown() {
 }
 
 // Next returns a random index from available messages
-func (s *RandomScheduler) Next(messages []*network.Message, faults []*faults.Fault, ctx faults.FaultContext) int {
+func (s *RandomScheduler) Next(messages []*network.Message, faults []*faults.Fault, ctx faults.FaultContext) SchedulerDecision {
 	// Apply faults with a probability of 1%
 	if rand.Float64() < 0.01 {
-		// Apply fault
-		faultIndex := rand.Intn(len(faults))
-		// print all faults passed
-		fmt.Println("Faults: ", faults)
-		fmt.Println("Applying fault: ", faults[faultIndex])
-
-		err := (*faults[faultIndex]).ApplyBehaviorIfPreconditionMet(&ctx)
-
-		if err != nil {
-			return 0
+		return SchedulerDecision{
+			DecisionType: InjectFault,
+			Index:        rand.Intn(len(faults)),
 		}
 	}
 
-	return rand.Intn(len(messages))
+	return SchedulerDecision{
+		DecisionType: SendMessage,
+		Index:        rand.Intn(len(messages)),
+	}
 }

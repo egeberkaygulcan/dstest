@@ -9,8 +9,21 @@ type Scheduler interface {
 	Init()
 	Reset()
 	Shutdown()
-	Next([]*network.Message, []*faults.Fault, faults.FaultContext) int
+	Next([]*network.Message, []*faults.Fault, faults.FaultContext) SchedulerDecision
 	ApplyFault(*faults.Fault) error
+}
+
+type DecisionType int
+
+const (
+	NoOp DecisionType = iota
+	SendMessage
+	InjectFault
+)
+
+type SchedulerDecision struct {
+	DecisionType DecisionType
+	Index        int
 }
 
 type SchedulerType string
