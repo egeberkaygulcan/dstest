@@ -130,7 +130,7 @@ func (te *TestEngine) Run() error {
 
 				if decision.DecisionType == scheduling.InjectFault {
 					fault := te.FaultManager.GetFaults()[decision.Index]
-					te.Log.Printf("Applying fault: %s\n", fault)
+					te.Log.Printf("Applying fault: %+v\n", fault)
 					err := (*fault).ApplyBehaviorIfPreconditionMet(&faultContext)
 					if err != nil {
 						te.Log.Printf("Error applying fault: %s\n", err)
