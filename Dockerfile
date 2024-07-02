@@ -27,28 +27,29 @@ RUN GOOS=linux GOARCH=amd64 \
 RUN go test -cover -v ./...
 
 ###############################################################################
-# Stage 1b (Ratis)                                                            #
+# Stage 2A (Ratis, Zookeeper)                                                 #
 ###############################################################################
-FROM maven:3.9.8 AS ratis-builder
+FROM maven:3.9.8 AS java-builder
+
+# Ratis
 RUN git clone https://github.com/apache/ratis.git /src/ratis
 WORKDIR /src/ratis
 RUN mvn clean package -DskipTests
 
+# Zookeeper
+RUN git clone https://github.com/apache/zookeeper.git /src/zookeeper
+WORKDIR /src/zookeeper
+RUN mvn clean package -DskipTests
+
 ###############################################################################
-# Stage 2 (to create a downsized "container executable", ~5MB)                #
+# Stage 3 (to create a downsized "container executable", ~5MB)                #
 ###############################################################################
-# If you need SSL certificates for HTTPS, replace `FROM SCRATCH` with:
-#
-#   FROM alpine:3.17.1
-#   RUN apk --no-cache add ca-certificates
-#
-#FROM scratch
 FROM openjdk:17
 WORKDIR /root/
 COPY --from=builder /go/src/dstest /root/dstest
-COPY --from=ratis-builder /src/ratis /root/ratis
+COPY --from=java-builder /src/ratis /root/ratis
+COPY --from=java-builder /src/zookeeper /root/zookeeper
 
-#EXPOSE 8123
 WORKDIR /root/dstest/cmd/dstest/
 ENTRYPOINT ["./main"]
 CMD ["run", "-c", "./config/config.yml"]
