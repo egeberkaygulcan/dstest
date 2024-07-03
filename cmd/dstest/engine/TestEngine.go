@@ -59,7 +59,7 @@ func (te *TestEngine) Run() {
 	for i := 0; i < te.Experiments; i++ {
 		te.Log.Printf("Starting experiment %d...\n", i)
 
-		te.Scheduler.Init()
+		te.Scheduler.Init(te.Config)
 		for j := 0; j < te.Iterations; j++ {
 			te.Log.Printf("Starting iteration %d\n", j+1)
 			te.NetworkManager.Init(te.Config, te.ReplicaIds)
@@ -82,6 +82,11 @@ func (te *TestEngine) Run() {
 			schedule := make([]Action, 0)
 			for s := 0; s < te.Steps; s++ {
 				actions := te.NetworkManager.GetActions()
+				// TODO - Schedule client
+				sc := te.Scheduler.GetClientRequest()
+				if sc >= 0 {
+					te.ProcessManager.RunClient(sc)
+				}
 				// TODO - Get fault from scheduler
 				action := te.Scheduler.Next(actions)
 				if action != 0 {

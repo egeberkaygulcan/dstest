@@ -51,7 +51,6 @@ type Worker struct{
 	RunScript 	  string
 	NumReplicas         int
 	BaseInterceptorPort int
-	ClientScripts []string
 	CleanScript	  string
 	WorkerId 	  int
 	Type 		  ProcessType
@@ -69,15 +68,17 @@ type Worker struct{
 }
 
 func (worker *Worker) Init(config map[string]any) {
-	worker.RunScript = config["runScript"].(string)
-	worker.ClientScripts = config["clientScripts"].([]string)
-	worker.CleanScript = config["cleanScript"].(string)
-	worker.WorkerId = config["workerId"].(int)
-	worker.NumReplicas = config["numReplicas"].(int)
-	worker.BaseInterceptorPort = config["baseInterceptorPort"].(int)
 	worker.Type = config["type"].(ProcessType)
-	worker.Params = config["params"].(string)
+	worker.WorkerId = config["workerId"].(int)
+	worker.RunScript = config["runScript"].(string)
 	worker.Timeout = config["timeout"].(int)
+
+	if worker.Type == Replica {
+		worker.CleanScript = config["cleanScript"].(string)
+		worker.NumReplicas = config["numReplicas"].(int)
+		worker.BaseInterceptorPort = config["baseInterceptorPort"].(int)
+		worker.Params = config["params"].(string)
+	}
 
 	worker.TimeoutTimer = nil
 

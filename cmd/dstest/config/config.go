@@ -23,8 +23,9 @@ type TestConfig struct {
 type SchedulerConfig struct {
 	Type   string
 	Steps  int
+	ClientRequests int
 	Seed   int
-	Params map[string]string
+	Params map[string]any
 }
 
 type NetworkConfig struct {

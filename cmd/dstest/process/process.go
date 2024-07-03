@@ -1,17 +1,20 @@
 package process
 
 import (
-  "fmt"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 	"sync"
+	"sync/atomic"
+
 	"github.com/egeberkaygulcan/dstest/cmd/dstest/config"
 )
 
 type ProcessManager struct {
 	Config *config.Config
 	Workers map[int]*Worker
+	ClientWorkers map[int]*Worker
 	WorkerIds []int
 	Iteration int
 	Log *log.Logger
@@ -19,6 +22,7 @@ type ProcessManager struct {
 	WaitGroup *sync.WaitGroup
 	Basedir string
 	BugCandidate bool
+	ClientIdCounter atomic.Uint32
 }
 
 func (pm *ProcessManager) Init(config *config.Config, workerIds []int, iteration int) {
@@ -26,6 +30,7 @@ func (pm *ProcessManager) Init(config *config.Config, workerIds []int, iteration
 	pm.Log = log.New(os.Stdout, "[ProcessManager]", log.Default().Flags())
 	pm.CrashedWorkers = make(map[int]bool)
 	pm.Workers = make(map[int]*Worker)
+	pm.ClientWorkers = make(map[int]*Worker)
 	pm.WorkerIds = workerIds
 	pm.WaitGroup = new(sync.WaitGroup)
 	pm.Iteration = iteration
@@ -52,7 +57,6 @@ func (pm *ProcessManager) generateReplicaWorkerConfig() []map[string]any {
 		conf := make(map[string]any)
 		conf["runScript"] = pm.Config.ProcessConfig.ReplicaScript
 		conf["cleanScript"] = pm.Config.ProcessConfig.CleanScript
-		conf["clientScripts"] = pm.Config.ProcessConfig.ClientScripts
 		conf["workerId"] = pm.WorkerIds[i]
 		conf["type"] = Replica
 		conf["baseInterceptorPort"] = pm.Config.NetworkConfig.BaseInterceptorPort
@@ -121,6 +125,12 @@ func (pm *ProcessManager) Shutdown() {
 			worker.StopWorker()
 		}
 	}
+
+	for _, worker := range pm.ClientWorkers {
+		if worker.Status != Exception && worker.Status != Timeout && worker.Status != Done {
+			worker.StopWorker()
+		}
+	}
 }
 
 func (pm *ProcessManager) CrashReplica(workerId int) bool {
@@ -149,15 +159,46 @@ func (pm *ProcessManager) RestartReplica(workerId int) bool {
 	return false
 }
 
-func (pm *ProcessManager) generateClientWorkerConfig() []map[string]any {
-	// TODO
-	return nil
+func (pm *ProcessManager) generateClientWorkerConfig(clientType int) map[string]any {
+	conf := make(map[string]any)
+	conf["runScript"] = pm.Config.ProcessConfig.ClientScripts[clientType]
+	conf["type"] = Client
+	conf["workerId"] = int(pm.ClientIdCounter.Add(1))
+	conf["timeout"] = pm.Config.ProcessConfig.Timeout
+	pm.Basedir = filepath.Join(pm.Config.ProcessConfig.OutputDir, 
+							fmt.Sprintf("%s_%s_%d", 
+										pm.Config.TestConfig.Name, 
+										pm.Config.SchedulerConfig.Type,
+										pm.Iteration))
+	conf["basedir"] = pm.Basedir 
+
+	stdout, err := os.OpenFile(filepath.Join(pm.Basedir, fmt.Sprintf("client_stdout_%d.log", conf["workerId"])), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		pm.Log.Printf("Could not create worker stdout.\n Err: %s\n", err)
+	}
+	conf["stdout"] = stdout
+
+	stderr, err := os.OpenFile(filepath.Join(pm.Basedir, fmt.Sprintf("client_stderr_%d.log", conf["workerId"])), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		pm.Log.Printf("Could not create worker stderr.\n Err: %s\n", err)
+	}
+	conf["stderr"] = stderr
+	return conf
 }
 
-func (pm *ProcessManager) RunClient() {
+func (pm *ProcessManager) RunClient(clientType int) {
 	// Initialize client
+	config := pm.generateClientWorkerConfig(clientType)
+	clientWorker := new(Worker)
+	clientWorker.Init(config)
+	pm.ClientWorkers[config["workerId"].(int)] = clientWorker
 
 	// Call client worker as goroutine
+	pm.WaitGroup.Add(1)
+	go func(worker *Worker, wg *sync.WaitGroup) {
+		worker.RunWorker()
+		wg.Done()
+	} (clientWorker, pm.WaitGroup)
 }
 
 func (pm *ProcessManager) deleteDir() {

@@ -1,14 +1,16 @@
 package scheduling
 
 import (
+	"github.com/egeberkaygulcan/dstest/cmd/dstest/config"
 	"github.com/egeberkaygulcan/dstest/cmd/dstest/network"
 )
 
 type Scheduler interface {
-	Init()
+	Init(config *config.Config)
 	Reset()
 	Shutdown()
 	Next([]*network.Message) int
+	GetClientRequest() int
 }
 
 type SchedulerType string

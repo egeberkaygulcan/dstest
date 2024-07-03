@@ -42,15 +42,17 @@ func (nm *Manager) Init(config *config.Config, replicaIds []int) {
 
 	// create the interceptors and message queues
 	nm.PortMap = make(map[int]SenderReceiverPair)
+	k := 0
 	for i := 0; i < numReplicas; i++ {
 		nm.MessageQueues[i] = new(MessageQueue)
 		nm.MessageQueues[i].Init()
 		for j := 0; j < numReplicas; j++ {
 			if i != j {
 				id := i*numReplicas+j
-				nm.Interceptors[id] = new(Http2CInterceptor)
-				nm.Interceptors[id].Init(id, nm.Config.NetworkConfig.BaseInterceptorPort+id, nm)
+				nm.Interceptors[k] = new(Http2CInterceptor)
+				nm.Interceptors[k].Init(id, nm.Config.NetworkConfig.BaseInterceptorPort+id, nm)
 				nm.PortMap[nm.Config.NetworkConfig.BaseInterceptorPort+id] = SenderReceiverPair{Sender: i, Receiver: j}
+				k++
 			}
 		}
 	}
