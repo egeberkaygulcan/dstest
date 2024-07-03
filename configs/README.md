@@ -8,13 +8,10 @@ Apache Ratis is a Java library that implements the Raft consensus algorithm.
 It is used to build fault-tolerant, replicated state machines to ensure strong
 consistency and reliability across the replicated servers in a distributed system.
 
-To configure dstest to test Apache Ratis, you can use the provided configuration file [`config.yml`](cmd/dstest/config/config.yml).
-
-This file contains the configuration for the Apache Ratis test, including the number of replicas, the number of interceptors, and the ports to use for the replicas and interceptors.
-
 [ratis.yml](ratis.yml) showcases an example configuration file for testing Apache Ratis with 3 replicas.
 
-One can run the test with the following command:
+After building the docker image, one can run the test with the following command from the root directory of the project:
 ```shell
-$ dstest -c configs/ratis.yml
+$ docker run -v ./configs:/configs egeberkaygulcan/dstest run -c /configs/ratis.yml
 ```
+
