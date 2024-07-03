@@ -56,8 +56,9 @@ This section contains the configuration on how to spawn the processes of the sys
 - `CleanScript`: The script to run to clean up the system under test.
 - `ReplicaParams`: A list of parameters to pass to the replica script; one for each replica.
 
-## Usage
-TODO
+## Running the examples
+
+See the [configs](configs/README.md) directory for examples of how to run DSTest with different distributed systems and sample configurations.
 
 ## License
 See [LICENSE](LICENSE.md).
