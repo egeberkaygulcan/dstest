@@ -155,16 +155,16 @@ func (nm *Manager) SendMessage(messageId uint64) {
 func (nm *Manager) GetActions() []*Message {
 	var actions []*Message
 
-	delayMessage := &(Message{
-		Sender:   -1,
-		Receiver: -1,
-		Payload:  Http2CPayload{Request: nil, Writer: nil, Response: nil},
-		Type: "Delay",
-		Name: "Delay",
-		MessageId: uint64(0),
-		Send:     nil,
-	})
-	actions = append(actions, delayMessage)
+	// delayMessage := &(Message{
+	// 	Sender:   -1,
+	// 	Receiver: -1,
+	// 	Payload:  Http2CPayload{Request: nil, Writer: nil, Response: nil},
+	// 	Type: "Delay",
+	// 	Name: "Delay",
+	// 	MessageId: uint64(0),
+	// 	Send:     nil,
+	// })
+	// actions = append(actions, delayMessage)
 
 	for _, mq := range nm.MessageQueues {
 		action := mq.Peek()

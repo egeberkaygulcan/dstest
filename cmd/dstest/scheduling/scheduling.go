@@ -10,7 +10,7 @@ type Scheduler interface {
 	Reset()
 	Shutdown()
 	NextIteration()
-	Next([]*network.Message) int
+	Next([]*network.Message, int) int
 	GetClientRequest() int
 }
 
@@ -18,6 +18,7 @@ type SchedulerType string
 
 const (
 	Random SchedulerType = "random"
+	Pctcp  SchedulerType = "pctcp"
 )
 
 func NewScheduler(schedulerType SchedulerType) Scheduler {

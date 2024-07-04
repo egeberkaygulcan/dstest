@@ -1,20 +1,22 @@
 TestConfig:
   Name: ratis-test
   Experiments: 1
-  Iterations: 3
-  WaitDuration: 50 # Time duration to wait between execution steps in milliseconds
-SchedulerConfig: #TODO - Seperate the scheduler param
+  Iterations: 1
+  WaitDuration: 1
+  StartupDuration: 0 # seconds
+SchedulerConfig: 
   Type: "random"
-  Steps: 100
-  ClientRequests: 1
+  Steps: 1000
+  ClientRequests: 2
   Seed: 42
-  Params: {"client_request_probability": 0.2}
+  Params: {"client_request_probability": 0.01}
 NetworkConfig:
   BaseReplicaPort: 6000
   BaseInterceptorPort: 10000
+  MessageType: GRPC
 ProcessConfig:
   NumReplicas: 3
-  Timeout: 10
+  Timeout: 60
   OutputDir: output
   ReplicaScript: scripts/ratis_server.sh
   ClientScripts:
@@ -27,3 +29,6 @@ ProcessConfig:
     - "6000 10001 10002 n0"
     - "10003 6001 10005 n1"
     - "10006 10007 6002 n2"
+    # - "6000 10001 10002 n0"
+    # - "10003 6001 10005 n1"
+    # - "10006 10007 6002 n2"

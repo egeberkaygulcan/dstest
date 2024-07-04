@@ -128,10 +128,9 @@ func (worker *Worker) RunWorker() {
 		return
 	case err:= <- errch:
 		if err != nil {
-			if worker.Status != Crashed && worker.Status != Done {
+			if worker.Status != Crashed && worker.Status != Done && worker.Type != Client{
 				worker.Log.Printf("Error while waiting worker. \nError: %s\n", err)
 				worker.Status = Exception
-				// worker.KillWorker()
 			}
 			return
 		} else {

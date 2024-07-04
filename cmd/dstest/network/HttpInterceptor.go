@@ -22,7 +22,7 @@ type HttpInterceptor struct {
 	Listener *net.TCPListener
 	Ctx      context.Context
 	Cancel   context.CancelFunc
-	WG       sync.WaitGroup
+	// WG       sync.WaitGroup
 }
 
 // Check if BaseInterceptor implements Interceptor interface
@@ -36,7 +36,7 @@ func (hi *HttpInterceptor) Init(id int, port int, nm *Manager) {
 }
 
 func (hi *HttpInterceptor) Run() error {
-	addr, _ := net.ResolveTCPAddr("tcp", fmt.Sprintf("127.0.0.1:%d", hi.Port))
+	addr, _ := net.ResolveTCPAddr("tcp", fmt.Sprintf(":%d", hi.Port))
 	var err error
 	hi.Listener, err = net.ListenTCP("tcp", addr)
 	if err != nil {
@@ -52,6 +52,7 @@ func (hi *HttpInterceptor) Run() error {
 			default:
 				if hi.Listener != nil {
 					conn, err := hi.Listener.Accept()
+					hi.Log.Println("Accepting new connection")
 					if err != nil {
 						if errors.Is(err, io.EOF) { // errors.Is(err, net.ErrClosed)
 							hi.Log.Printf("Error while accepting TCP connection: %s\n", err)
@@ -59,10 +60,10 @@ func (hi *HttpInterceptor) Run() error {
 						continue
 					}
 
-					hi.WG.Add(1)
+					// hi.WG.Add(1)
 					go func() {
 						hi.handleConn(conn.(*net.TCPConn))
-						hi.WG.Done()
+						// hi.WG.Done()
 					}()
 				}
 			}
@@ -91,10 +92,12 @@ func (hi *HttpInterceptor) handleConn(conn *net.TCPConn) {
 	}
 
 	if req.ProtoMajor >= 2 {
+		// hi.Log.Println("Handling http2")
 		err = hi.handleHttp2(bytes.NewBuffer(payload), conn)
 		if err != nil {
 			hi.Log.Printf("Error while handling HTTP2: %s\n", err)
 		}
+		hi.Log.Println("Handled http2")
 	} else {
 		err = hi.handleHttpReq(req, conn)
 		if err != nil {
@@ -118,14 +121,15 @@ func (hi *HttpInterceptor) handleHttpReq(req *http.Request, w net.Conn) error {
 }
 
 func (hi *HttpInterceptor) handleHttp2(initial io.Reader, conn net.Conn) error {
-	// defer func() {
-	// 	_ = conn.Close()
-	// }()
+	defer func() {
+		_ = conn.Close()
+	}()
 
 	dataBuffer := bytes.NewBuffer(make([]byte, 0))
 	reader := io.TeeReader(conn, dataBuffer)
 
 	f := http2.NewFramer(conn, conn)
+
 	err := f.WriteSettings()
 	if err != nil {
 		hi.Log.Printf("Error while writing HTTP2 settings: %s\n", err)
@@ -156,13 +160,15 @@ func (hi *HttpInterceptor) handleHttp2(initial io.Reader, conn net.Conn) error {
 	})
 	<-awaitSendRequest
 
+	hi.Log.Printf("Sending from: %d", pair.Sender)
 	dialer, err := net.Dial("tcp", fmt.Sprintf(":%d", thisNodePort))
 	if err != nil {
 		hi.Log.Printf("Error while sending to original node: %s\n", err)
 		return err
 	}
 
-	_ = dialer.SetReadDeadline(time.Now().Add(1 * time.Second))
+	_ = dialer.SetReadDeadline(time.Now().Add(100 * time.Millisecond))
+	_ = dialer.SetWriteDeadline(time.Now().Add(100 * time.Millisecond))
 
 	wg := sync.WaitGroup{}
 	wg.Add(1)
@@ -173,7 +179,9 @@ func (hi *HttpInterceptor) handleHttp2(initial io.Reader, conn net.Conn) error {
 	}(&dataSent)
 
 	_, err = io.Copy(dialer, io.MultiReader(initial, dataBuffer, conn))
+	hi.Log.Println("Copy 2 completed.")
 	wg.Wait()
+	hi.Log.Println("WG, waited")
 
 	if errors.Is(err, os.ErrDeadlineExceeded) && dataSent > 0 {
 		return nil
@@ -185,7 +193,7 @@ func (hi *HttpInterceptor) handleHttp2(initial io.Reader, conn net.Conn) error {
 func (hi *HttpInterceptor) Shutdown() {
 	hi.Cancel()
 	hi.Listener.Close()
-	hi.WG.Wait()
+	// hi.WG.Wait()
 }
 
 // package network

@@ -45,19 +45,20 @@ func (te *TestEngine) Init(config *config.Config) {
 		te.ReplicaIds[i] = i
 	}
 
-
 	te.Scheduler = scheduling.NewScheduler(scheduling.SchedulerType(config.SchedulerConfig.Type))
 	te.NetworkManager = new(network.Manager)
-	// te.NetworkManager.Init(config)
 	te.ProcessManager = new(process.ProcessManager)
-	// te.ProcessManager.Init(config, te.Iterations)
+
+	if scheduling.SchedulerType(config.SchedulerConfig.Type) == scheduling.Pctcp {
+		config.SchedulerConfig.Params["network_manager"] = te.NetworkManager
+	}
 
 	te.Log = log.New(os.Stdout, "[TestEngine] ", log.LstdFlags)
 }
 
 func (te *TestEngine) Run() {
 	for i := 0; i < te.Experiments; i++ {
-		te.Log.Printf("Starting experiment %d...\n", i)
+		te.Log.Printf("Starting experiment %d...\n", i+1)
 
 		te.Scheduler.Init(te.Config)
 		for j := 0; j < te.Iterations; j++ {
@@ -80,22 +81,31 @@ func (te *TestEngine) Run() {
 			time.Sleep(time.Duration(te.Config.TestConfig.StartupDuration) * time.Second)
 
 			schedule := make([]Action, 0)
-			for s := 0; s < te.Steps; s++ {
+			for s := 0; s < te.Steps; {
+				if te.ProcessManager.BugCandidate {
+					break
+				}
 				actions := te.NetworkManager.GetActions()
-				// TODO - Schedule client
 				sc := te.Scheduler.GetClientRequest()
 				if sc >= 0 {
 					te.ProcessManager.RunClient(sc)
+					schedule = append(schedule, Action{
+						Sender: -1,
+						Receiver: -1,
+						Name: fmt.Sprintf("ClientRequest_%d_%d", s, sc),
+					})
 				}
 				// TODO - Get fault from scheduler
-				action := te.Scheduler.Next(actions)
-				if action != 0 {
+				action := te.Scheduler.Next(actions, s)
+				if action >= 0 {
+					te.Log.Printf("Scheduling :%d", actions[action].Sender)
 					te.NetworkManager.SendMessage(actions[action].MessageId)
 					schedule = append(schedule, Action{
 						Sender: actions[action].Sender,
 						Receiver: actions[action].Receiver,
 						Name: actions[action].Name,
 					})
+					s++
 				}
 				
 				// TODO - Execute fault and append to schedule
@@ -111,7 +121,7 @@ func (te *TestEngine) Run() {
 			wg.Wait()
 
 			te.Log.Println("Checking for bugs...")
-			if !te.ProcessManager.BugCandidate {
+			if true { // te.ProcessManager.BugCandidate {
 				outputFile, err := os.OpenFile(filepath.Join(te.ProcessManager.Basedir, "schedule.log"), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 				if err != nil {
 					te.Log.Printf("Could not create schedule file.\n Err: %s\n", err)
