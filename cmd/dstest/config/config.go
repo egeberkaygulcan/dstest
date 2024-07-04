@@ -31,6 +31,7 @@ type SchedulerConfig struct {
 type NetworkConfig struct {
 	BaseReplicaPort     int
 	BaseInterceptorPort int
+	MessageType string
 }
 
 type ProcessConfig struct {
@@ -58,6 +59,12 @@ func ModifyFilepath(config *Config) {
 	config.ProcessConfig.ReplicaScript = filepath.Join(wd, config.ProcessConfig.ReplicaScript)
 	if len(config.ProcessConfig.CleanScript) > 0 {
 		config.ProcessConfig.CleanScript = filepath.Join(wd, config.ProcessConfig.CleanScript)
+	}
+
+	if len(config.ProcessConfig.ClientScripts) > 0 {
+		for i := 0; i < len(config.ProcessConfig.ClientScripts); i++ {
+			config.ProcessConfig.ClientScripts[i] = filepath.Join(wd, config.ProcessConfig.ClientScripts[i])
+		}
 	}
 }
 
