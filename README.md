@@ -41,6 +41,12 @@ This section contains the configuration for the scheduler: which scheduler to us
 - `Seed`: The seed to use for the random number generator.
 - `Params`: A map of parameters to pass to the scheduler.
 
+###### FaultConfig
+This section contains the configuration for the fault injector.
+- `Faults`: An array of faults to inject. Each fault has the following fields:
+  - `Type`: The type (ID) of fault to inject.
+  - `Params`: A map of parameters to pass to the fault. Each fault type has its own set of parameters.
+
 ###### NetworkConfig
 This section contains the configuration for the network, namely the ports to use for the replicas and their interceptors.
 - `BaseReplicaPort`: The base port number to use for replicas. Each of the `N` replicas will be assigned a port number starting from this value (from `BaseReplicaPort` to `BaseReplicaPort + N - 1`).
@@ -56,8 +62,9 @@ This section contains the configuration on how to spawn the processes of the sys
 - `CleanScript`: The script to run to clean up the system under test.
 - `ReplicaParams`: A list of parameters to pass to the replica script; one for each replica.
 
-## Usage
-TODO
+## Running the examples
+
+See the [configs](configs/README.md) directory for examples of how to run DSTest with different distributed systems and sample configurations.
 
 ## License
 See [LICENSE](LICENSE.md).
