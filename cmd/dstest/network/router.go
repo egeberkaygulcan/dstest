@@ -35,11 +35,10 @@ func (r *Router) Init(NetworkManager *Manager, numReplicas int) {
 func (r *Router) QueueMessage(m *Message) {
 	// check if there is connectivity between sender and receiver
 	tm := r.MessageTranslator.Translate(m)
+	// tm :=  m
 	if r.HasConnectivity(tm.Sender, tm.Receiver) {
 		r.NetworkManager.MessageQueues[tm.Receiver].PushBack(tm)
-		r.Log.Printf("Queued message #%d from %d to %d: %s\n", r.NetworkManager.MessageQueues[tm.Receiver].Len(), tm.Sender, tm.Receiver, (tm.Payload))
-		// notify scheduler
-		//r.NetworkManager.Scheduler.OnQueuedMessage(&m)
+		// r.Log.Printf("Queued message #%d from %d to %d: %s\n", r.NetworkManager.MessageQueues[tm.Receiver].Len(), tm.Sender, tm.Receiver, (tm.Payload))
 	} else {
 		r.Log.Printf("Message from %d to %d dropped\n", tm.Sender, tm.Receiver)
 	}
