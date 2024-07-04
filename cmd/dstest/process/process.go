@@ -12,17 +12,18 @@ import (
 )
 
 type ProcessManager struct {
-	Config *config.Config
-	Workers map[int]*Worker
-	ClientWorkers map[int]*Worker
-	WorkerIds []int
-	Iteration int
-	Log *log.Logger
-	CrashedWorkers map[int]bool
-	WaitGroup *sync.WaitGroup
-	Basedir string
-	BugCandidate bool
-	ClientIdCounter atomic.Uint32
+	Config          *config.Config
+	Workers         map[int]*Worker
+	ClientWorkers   map[int]*Worker
+	WorkerIds       []int
+	ClientIds       []int
+	ClientIdCounter atomic.Int64
+	Iteration       int
+	Log             *log.Logger
+	CrashedWorkers  map[int]bool
+	WaitGroup       *sync.WaitGroup
+	Basedir         string
+	BugCandidate    bool
 }
 
 func (pm *ProcessManager) Init(config *config.Config, workerIds []int, iteration int) {
@@ -32,13 +33,15 @@ func (pm *ProcessManager) Init(config *config.Config, workerIds []int, iteration
 	pm.Workers = make(map[int]*Worker)
 	pm.ClientWorkers = make(map[int]*Worker)
 	pm.WorkerIds = workerIds
+	pm.ClientIds = make([]int, 0)
+	pm.ClientIdCounter.Store(0)
 	pm.WaitGroup = new(sync.WaitGroup)
 	pm.Iteration = iteration
 	pm.BugCandidate = false
 
 	if err := os.MkdirAll(pm.Config.ProcessConfig.OutputDir, os.ModePerm); err != nil {
-        pm.Log.Printf("Could not create output directory.\n Err: %s\n", err)
-    }
+		pm.Log.Printf("Could not create output directory.\n Err: %s\n", err)
+	}
 
 	// Generate worker configurations
 	workerConfig := pm.generateReplicaWorkerConfig()
@@ -63,15 +66,15 @@ func (pm *ProcessManager) generateReplicaWorkerConfig() []map[string]any {
 		conf["numReplicas"] = pm.Config.ProcessConfig.NumReplicas
 		conf["params"] = pm.Config.ProcessConfig.ReplicaParams[i]
 		conf["timeout"] = pm.Config.ProcessConfig.Timeout
-		pm.Basedir = filepath.Join(pm.Config.ProcessConfig.OutputDir, 
-								fmt.Sprintf("%s_%s_%d", 
-											pm.Config.TestConfig.Name, 
-											pm.Config.SchedulerConfig.Type,
-											pm.Iteration))
+		pm.Basedir = filepath.Join(pm.Config.ProcessConfig.OutputDir,
+			fmt.Sprintf("%s_%s_%d",
+				pm.Config.TestConfig.Name,
+				pm.Config.SchedulerConfig.Type,
+				pm.Iteration))
 		if err := os.MkdirAll(pm.Basedir, os.ModePerm); err != nil {
 			pm.Log.Printf("Could not create iteration directory.\n Err: %s\n", err)
 		}
-		conf["basedir"] = pm.Basedir 
+		conf["basedir"] = pm.Basedir
 
 		stdout, err := os.OpenFile(filepath.Join(pm.Basedir, fmt.Sprintf("stdout_%d.log", conf["workerId"])), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		if err != nil {
@@ -98,7 +101,7 @@ func (pm *ProcessManager) Run() {
 		go func(worker *Worker, wg *sync.WaitGroup) {
 			worker.RunWorker()
 			wg.Done()
-		} (worker, pm.WaitGroup)
+		}(worker, pm.WaitGroup)
 	}
 
 	pm.WaitGroup.Wait()
@@ -111,6 +114,13 @@ func (pm *ProcessManager) Run() {
 		pm.Log.Printf("Worker %d status: %s\n", workerId, worker.Status.String())
 	}
 
+	for workerId, worker := range pm.ClientWorkers {
+		if worker.Status != Done {
+			bug = true
+		}
+		pm.Log.Printf("Client %d status: %s\n", workerId, worker.Status.String())
+	}
+
 	if !bug {
 		pm.deleteDir()
 	} else {
@@ -120,14 +130,14 @@ func (pm *ProcessManager) Run() {
 }
 
 func (pm *ProcessManager) Shutdown() {
-	for _, worker := range pm.Workers {
-		if worker.Status != Exception && worker.Status != Timeout {
+	for _, worker := range pm.ClientWorkers {
+		if worker.Status != Exception && worker.Status != Timeout && worker.Status != Done {
 			worker.StopWorker()
 		}
 	}
 
-	for _, worker := range pm.ClientWorkers {
-		if worker.Status != Exception && worker.Status != Timeout && worker.Status != Done {
+	for _, worker := range pm.Workers {
+		if worker.Status != Exception && worker.Status != Timeout {
 			worker.StopWorker()
 		}
 	}
@@ -165,12 +175,12 @@ func (pm *ProcessManager) generateClientWorkerConfig(clientType int) map[string]
 	conf["type"] = Client
 	conf["workerId"] = int(pm.ClientIdCounter.Add(1))
 	conf["timeout"] = pm.Config.ProcessConfig.Timeout
-	pm.Basedir = filepath.Join(pm.Config.ProcessConfig.OutputDir, 
-							fmt.Sprintf("%s_%s_%d", 
-										pm.Config.TestConfig.Name, 
-										pm.Config.SchedulerConfig.Type,
-										pm.Iteration))
-	conf["basedir"] = pm.Basedir 
+	pm.Basedir = filepath.Join(pm.Config.ProcessConfig.OutputDir,
+		fmt.Sprintf("%s_%s_%d",
+			pm.Config.TestConfig.Name,
+			pm.Config.SchedulerConfig.Type,
+			pm.Iteration))
+	conf["basedir"] = pm.Basedir
 
 	stdout, err := os.OpenFile(filepath.Join(pm.Basedir, fmt.Sprintf("client_stdout_%d.log", conf["workerId"])), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
@@ -192,13 +202,12 @@ func (pm *ProcessManager) RunClient(clientType int) {
 	clientWorker := new(Worker)
 	clientWorker.Init(config)
 	pm.ClientWorkers[config["workerId"].(int)] = clientWorker
+	pm.ClientIds = append(pm.ClientIds, config["workerId"].(int))
 
 	// Call client worker as goroutine
-	pm.WaitGroup.Add(1)
-	go func(worker *Worker, wg *sync.WaitGroup) {
+	go func(worker *Worker) {
 		worker.RunWorker()
-		wg.Done()
-	} (clientWorker, pm.WaitGroup)
+	}(clientWorker)
 }
 
 func (pm *ProcessManager) deleteDir() {

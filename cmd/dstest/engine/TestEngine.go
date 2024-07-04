@@ -123,6 +123,7 @@ func (te *TestEngine) Run() {
 				outputFile.Close()
 			}
 			te.Log.Println("Iteration complete.")
+			te.Scheduler.NextIteration()
 		}
 		te.Scheduler.Reset()
 	}
