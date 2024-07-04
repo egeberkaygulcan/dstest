@@ -1,7 +1,6 @@
 package config
 
 import (
-	"bytes"
 	_ "embed"
 	"os"
 	"path/filepath"
@@ -10,13 +9,10 @@ import (
 	"github.com/spf13/viper"
 )
 
-//go:embed config.yml
-var defaultConfiguration []byte
-
 type TestConfig struct {
-	Name        string
-	Experiments int
-	Iterations  int
+	Name         string
+	Experiments  int
+	Iterations   int
 	WaitDuration int
 	StartupDuration int
 }
@@ -33,15 +29,23 @@ type NetworkConfig struct {
 	BaseReplicaPort     int
 	BaseInterceptorPort int
 	MessageType string
+	Protocol            string
+}
+
+type FaultConfig struct {
+	Faults []struct {
+		Type   string
+		Params map[string]interface{}
+	}
 }
 
 type ProcessConfig struct {
 	NumReplicas   int
-	Timeout 	  int
-	OutputDir	  string
+	Timeout       int
+	OutputDir     string
 	ReplicaScript string
 	ClientScripts []string
-	CleanScript	  string
+	CleanScript   string
 	ReplicaParams []string
 }
 
@@ -49,6 +53,7 @@ type Config struct {
 	TestConfig      *TestConfig
 	SchedulerConfig *SchedulerConfig
 	NetworkConfig   *NetworkConfig
+	FaultConfig     *FaultConfig
 	ProcessConfig   *ProcessConfig
 }
 
@@ -72,14 +77,15 @@ func ModifyFilepath(config *Config) {
 func Read() (*Config, error) {
 	// Environment variables
 	viper.AutomaticEnv()
-	viper.SetEnvPrefix("APP")
+	//viper.SetEnvPrefix("APP")
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_"))
 
 	// Configuration file type
+	viper.SetConfigFile(viper.GetString("config"))
 	viper.SetConfigType("yml")
 
 	// Read configuration
-	if err := viper.ReadConfig(bytes.NewBuffer(defaultConfiguration)); err != nil {
+	if err := viper.ReadInConfig(); err != nil {
 		return nil, err
 	}
 

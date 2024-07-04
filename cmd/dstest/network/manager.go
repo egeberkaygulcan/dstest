@@ -1,6 +1,7 @@
 package network
 
 import (
+	"fmt"
 	"log"
 	"sync"
 	"sync/atomic"
@@ -37,7 +38,8 @@ type Manager struct {
 	ChainClocks [][]Event
 }
 
-func (nm *Manager) Init(config *config.Config, replicaIds []int) {
+func (nm *Manager) Init(config *config.Config, replicaIds []int) error {
+
 	numReplicas := config.ProcessConfig.NumReplicas
 
 	nm.Config = config
@@ -57,6 +59,12 @@ func (nm *Manager) Init(config *config.Config, replicaIds []int) {
 	k := 0
 	for i := 0; i < numReplicas; i++ {
 		nm.MessageQueues[i] = new(MessageQueue)
+		var err error = nil
+		nm.Interceptors[i], err = createInterceptor(config.NetworkConfig.Protocol)
+		if err != nil {
+			return fmt.Errorf("Error creating interceptor: %s", err.Error())
+		}
+
 		nm.MessageQueues[i].Init()
 		for j := 0; j < numReplicas; j++ {
 			if i != j {
@@ -74,6 +82,7 @@ func (nm *Manager) Init(config *config.Config, replicaIds []int) {
 	nm.Log = log.New(log.Writer(), "[NetworkManager] ", log.LstdFlags)
 
 	nm.Log.Println("Network manager initialized")
+	return nil
 }
 
 func (nm *Manager) Run() {
@@ -104,7 +113,7 @@ func (nm *Manager) Shutdown() {
 }
 
 func (nm *Manager) GenerateUniqueId() uint64 {
-	return nm.Index.Add(1) 
+	return nm.Index.Add(1)
 }
 
 func max(x, y int) int {

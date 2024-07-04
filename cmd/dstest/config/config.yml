@@ -4,9 +4,9 @@ TestConfig:
   Iterations: 1
   WaitDuration: 1
   StartupDuration: 0 # seconds
-SchedulerConfig: 
+SchedulerConfig:
   Type: "random"
-  Steps: 1000
+  Steps: 100
   ClientRequests: 2
   Seed: 42
   Params: {"client_request_probability": 0.01}
@@ -14,6 +14,28 @@ NetworkConfig:
   BaseReplicaPort: 6000
   BaseInterceptorPort: 10000
   MessageType: GRPC
+FaultConfig:
+  Faults:
+    - Type: dummy # does nothing
+      Params: {}
+    - Type: dummy
+      Params: {}
+    - Type: restart
+      Params:
+        node: 0
+    - Type: restart
+      Params:
+        node: 1
+    - Type: crash
+      Params:
+        node: 0
+#    - Type: "Partition"
+#      Params: # these are mostly for testing, to see if the marshaller works
+#        StartQuantity: 1
+#        StartUnit: "Messages" # or "Seconds"
+#        DurationQuantity: 3
+#        DurationUnit: "Messages" # or "Seconds"
+#        Nodes: [["n0", "n1"], ["n2", "n3"]]
 ProcessConfig:
   NumReplicas: 3
   Timeout: 60
