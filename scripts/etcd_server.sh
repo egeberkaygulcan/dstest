@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 TOKEN=token-01
-BIN=../../etcd/bin
+BIN=../../../etcd/bin
 CLUSTER_STATE=new
 CLUSTER=n0=http://127.0.0.1:$1,n1=http://127.0.0.1:$2,n2=http://127.0.0.1:$3
 
