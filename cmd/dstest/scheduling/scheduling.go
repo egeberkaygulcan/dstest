@@ -9,6 +9,7 @@ type Scheduler interface {
 	Init(config *config.Config)
 	Reset()
 	Shutdown()
+	NextIteration()
 	Next([]*network.Message) int
 	GetClientRequest() int
 }
