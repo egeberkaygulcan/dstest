@@ -7,11 +7,33 @@ SchedulerConfig: #TODO - Seperate the scheduler param
   Type: "ql"
   Steps: 100
   Seed: 42
-  Params: {} 
+  Params: {}
 NetworkConfig:
   BaseReplicaPort: 6000
   BaseInterceptorPort: 10000
   Protocol: "http2c"
+FaultConfig:
+  Faults:
+    - Type: dummy # does nothing
+      Params: {}
+    - Type: dummy
+      Params: {}
+    - Type: restart
+      Params:
+        node: 0
+    - Type: restart
+      Params:
+        node: 1
+    - Type: crash
+      Params:
+        node: 0
+#    - Type: "Partition"
+#      Params: # these are mostly for testing, to see if the marshaller works
+#        StartQuantity: 1
+#        StartUnit: "Messages" # or "Seconds"
+#        DurationQuantity: 3
+#        DurationUnit: "Messages" # or "Seconds"
+#        Nodes: [["n0", "n1"], ["n2", "n3"]]
 ProcessConfig:
   NumReplicas: 3
   Timeout: 10

@@ -2,6 +2,7 @@ package engine
 
 import (
 	"fmt"
+	"github.com/egeberkaygulcan/dstest/cmd/dstest/faults"
 	"log"
 	"os"
 	"path/filepath"
@@ -15,26 +16,36 @@ import (
 )
 
 type Action struct {
-	Sender int
+	Sender   int
 	Receiver int
-	Name string
+	Name     string
+}
+
+// FIXME: Repetition of FaultManager interface to avoid cyclic import
+// how to avoid this?
+type FaultManager interface {
+	Init(config *config.Config) error
+	GetFaults() []*faults.Fault
+	GetEnabledFaults() []*faults.Fault
+	PrintFaults()
 }
 
 type TestEngine struct {
-	Config *config.Config
-	Scheduler scheduling.Scheduler
+	Config         *config.Config
+	Scheduler      scheduling.Scheduler
 	NetworkManager *network.Manager
 	ProcessManager *process.ProcessManager
-	Log *log.Logger
+	FaultManager   FaultManager
+	Log            *log.Logger
 
-	Experiments int
-	Iterations  int
-	Steps	    int
+	Experiments   int
+	Iterations    int
+	Steps         int
 	SleepDuration time.Duration
-	ReplicaIds	[]int
+	ReplicaIds    []int
 }
 
-func (te *TestEngine) Init(config *config.Config) {
+func (te *TestEngine) Init(config *config.Config) error {
 	te.Config = config
 	te.Experiments = config.TestConfig.Experiments
 	te.Iterations = config.TestConfig.Iterations
@@ -45,14 +56,20 @@ func (te *TestEngine) Init(config *config.Config) {
 		te.ReplicaIds[i] = i
 	}
 
-
 	te.Scheduler = scheduling.NewScheduler(scheduling.SchedulerType(config.SchedulerConfig.Type))
 	te.NetworkManager = new(network.Manager)
 	// te.NetworkManager.Init(config)
 	te.ProcessManager = new(process.ProcessManager)
 	// te.ProcessManager.Init(config, te.Iterations)
+	te.FaultManager = new(faults.FaultManager)
+
+	if err := te.FaultManager.Init(config); err != nil {
+		return fmt.Errorf("Error initializing FaultManager: %s", err.Error())
+	}
 
 	te.Log = log.New(os.Stdout, "[TestEngine] ", log.LstdFlags)
+
+	return nil
 }
 
 func (te *TestEngine) Run() error {
@@ -68,6 +85,15 @@ func (te *TestEngine) Run() error {
 			if err != nil {
 				return fmt.Errorf("Error initializing NetworkManager: %s", err.Error())
 			}
+
+			// Initialize FaultManager
+			err = te.FaultManager.Init(te.Config)
+			if err != nil {
+				return fmt.Errorf("Error initializing FaultManager: %s", err.Error())
+			}
+			// print all faults
+			fmt.Println("\nFaults:")
+			te.FaultManager.PrintFaults()
 
 			te.ProcessManager.Init(te.Config, te.ReplicaIds, j)
 			var wg sync.WaitGroup
@@ -89,17 +115,28 @@ func (te *TestEngine) Run() error {
 			for s := 0; s < te.Steps; s++ {
 				actions := te.NetworkManager.GetActions()
 				// TODO - Get fault from scheduler
-				action := te.Scheduler.Next(actions)
-				if action != 0 {
+				var faultContext faults.FaultContext = NewEngineFaultContext(te)
+				decision := te.Scheduler.Next(actions, te.FaultManager.GetFaults(), faultContext)
+
+				if decision.DecisionType == scheduling.SendMessage {
+					action := decision.Index
 					te.NetworkManager.SendMessage(actions[action].MessageId)
 					schedule = append(schedule, Action{
-						Sender: actions[action].Sender,
+						Sender:   actions[action].Sender,
 						Receiver: actions[action].Receiver,
-						Name: actions[action].Name,
+						Name:     actions[action].Name,
 					})
 				}
-				
-				// TODO - Execute fault and append to schedule
+
+				if decision.DecisionType == scheduling.InjectFault {
+					fault := te.FaultManager.GetFaults()[decision.Index]
+					te.Log.Printf("Applying fault: %+v\n", fault)
+					err := (*fault).ApplyBehaviorIfPreconditionMet(&faultContext)
+					if err != nil {
+						te.Log.Printf("Error applying fault: %s\n", err)
+					}
+					// TODO - Append fault to schedule
+				}
 
 				time.Sleep(te.SleepDuration)
 			}
@@ -129,3 +166,26 @@ func (te *TestEngine) Run() error {
 	}
 	return nil
 }
+
+type EngineFaultContext struct {
+	engine *TestEngine
+}
+
+func NewEngineFaultContext(engine *TestEngine) *EngineFaultContext {
+	return &EngineFaultContext{engine: engine}
+}
+
+func (efc *EngineFaultContext) GetConfig() *config.Config {
+	return efc.engine.Config
+}
+
+func (efc *EngineFaultContext) GetNetworkManager() *network.Manager {
+	return efc.engine.NetworkManager
+}
+
+func (efc *EngineFaultContext) GetProcessManager() *process.ProcessManager {
+	return efc.engine.ProcessManager
+}
+
+// confirm that EngineFaultContext implements FaultContext
+var _ faults.FaultContext = (*EngineFaultContext)(nil)
