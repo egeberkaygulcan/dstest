@@ -4,7 +4,7 @@ TestConfig:
   Iterations: 10
   WaitDuration: 50 # Time duration to wait between execution steps in milliseconds
 SchedulerConfig: #TODO - Seperate the scheduler param
-  Type: "random"
+  Type: "ql"
   Steps: 100
   Seed: 42
   Params: {}
