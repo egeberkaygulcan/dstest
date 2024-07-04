@@ -78,6 +78,10 @@ func (worker *Worker) Init(config map[string]any) {
 		worker.NumReplicas = config["numReplicas"].(int)
 		worker.BaseInterceptorPort = config["baseInterceptorPort"].(int)
 		worker.Params = config["params"].(string)
+
+		worker.Log = log.New(os.Stdout, fmt.Sprintf("[Worker %d] ", worker.WorkerId), log.LstdFlags)
+	} else {
+		worker.Log = log.New(os.Stdout, fmt.Sprintf("[Client %d] ", worker.WorkerId), log.LstdFlags)
 	}
 
 	worker.TimeoutTimer = nil
@@ -86,7 +90,6 @@ func (worker *Worker) Init(config map[string]any) {
 	worker.Stderr = config["stderr"].(*os.File)
 
 	worker.Status = Initialized
-	worker.Log = log.New(os.Stdout, fmt.Sprintf("[Worker %d] ", worker.WorkerId), log.LstdFlags)
 }
 
 func (worker *Worker) RunWorker() {
@@ -128,13 +131,13 @@ func (worker *Worker) RunWorker() {
 			if worker.Status != Crashed && worker.Status != Done {
 				worker.Log.Printf("Error while waiting worker. \nError: %s\n", err)
 				worker.Status = Exception
-				worker.KillWorker()
+				// worker.KillWorker()
 			}
 			return
+		} else {
+			worker.Status = Done
 		}
 	}
-
-	worker.Status = Done
 }
 
 func (worker *Worker) KillWorker() {
