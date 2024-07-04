@@ -1,6 +1,7 @@
 package scheduling
 
 import (
+	"github.com/egeberkaygulcan/dstest/cmd/dstest/faults"
 	"math/rand"
 
 	"github.com/egeberkaygulcan/dstest/cmd/dstest/config"
@@ -13,8 +14,11 @@ type RandomScheduler struct {
 	RequestQuota             int
 	NumClientTypes           int
 	ClientRequestProbability float64
-	Rand *rand.Rand
+	Rand                     *rand.Rand
 }
+
+// assert RandomScheduler implements the Scheduler interface
+var _ Scheduler = &RandomScheduler{}
 
 func (s *RandomScheduler) Init(config *config.Config) {
 	s.Config = config
@@ -37,11 +41,16 @@ func (s *RandomScheduler) Shutdown() {
 }
 
 // Returns a random index from available messages
-func (s *RandomScheduler) Next(messages []*network.Message, iteration int) int {
+func (s *RandomScheduler) Next(messages []*network.Message, faults []*faults.Fault, context faults.FaultContext) SchedulerDecision {
 	if len(messages) > 0 {
-		return s.Rand.Intn(len(messages))
+		return SchedulerDecision{
+			DecisionType: SendMessage,
+			Index:        s.Rand.Intn(len(messages)),
+		}
 	} else {
-		return -1
+		return SchedulerDecision{
+			DecisionType: NoOp,
+		}
 	}
 }
 

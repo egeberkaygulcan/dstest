@@ -5,6 +5,7 @@ import (
 	"fmt"
 	agentv1 "github.com/aunum/gold/pkg/v1/agent"
 	"github.com/aunum/gold/pkg/v1/common"
+	"github.com/egeberkaygulcan/dstest/cmd/dstest/config"
 	"github.com/egeberkaygulcan/dstest/cmd/dstest/faults"
 	"github.com/egeberkaygulcan/dstest/cmd/dstest/network"
 	"github.com/egeberkaygulcan/dstest/cmd/dstest/scheduling/ql"
@@ -17,6 +18,9 @@ type QLScheduler struct {
 	agent *ql.Agent
 }
 
+// assert RandomScheduler implements the Scheduler interface
+var _ Scheduler = &QLScheduler{}
+
 var DefaultQLSchedulerConfig = &ql.AgentConfig{
 	Hyperparameters: &ql.Hyperparameters{
 		Epsilon: common.NewConstantSchedule(0.1),
@@ -26,7 +30,7 @@ var DefaultQLSchedulerConfig = &ql.AgentConfig{
 	Base: agentv1.NewBase("Q"),
 }
 
-func (s *QLScheduler) Init() {
+func (s *QLScheduler) Init(config *config.Config) {
 	s.agent = ql.NewAgent(DefaultQLSchedulerConfig, nil)
 }
 
