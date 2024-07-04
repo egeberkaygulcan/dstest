@@ -95,9 +95,7 @@ func (hi *HttpInterceptor) handleConn(conn *net.TCPConn) {
 		if err != nil {
 			hi.Log.Printf("Error while handling HTTP2: %s\n", err)
 		}
-		hi.Log.Println("Handled Http2.")
 	} else {
-		hi.Log.Println("Handling http.")
 		err = hi.handleHttpReq(req, conn)
 		if err != nil {
 			hi.Log.Printf("Error while handling HTTP: %s\n", err)
@@ -120,17 +118,14 @@ func (hi *HttpInterceptor) handleHttpReq(req *http.Request, w net.Conn) error {
 }
 
 func (hi *HttpInterceptor) handleHttp2(initial io.Reader, conn net.Conn) error {
-	hi.Log.Println("Handling Http2")
 	// defer func() {
 	// 	_ = conn.Close()
 	// }()
 
-	hi.Log.Println("TeeReader")
 	dataBuffer := bytes.NewBuffer(make([]byte, 0))
 	reader := io.TeeReader(conn, dataBuffer)
 
 	f := http2.NewFramer(conn, conn)
-	hi.Log.Println("Write Settings")
 	err := f.WriteSettings()
 	if err != nil {
 		hi.Log.Printf("Error while writing HTTP2 settings: %s\n", err)
@@ -149,7 +144,6 @@ func (hi *HttpInterceptor) handleHttp2(initial io.Reader, conn net.Conn) error {
 	pair := hi.NetworkManager.PortMap[hi.Port]
 	thisNodePort := pair.Receiver + hi.NetworkManager.Config.NetworkConfig.BaseReplicaPort
 	// queue the request in the network manager
-	hi.Log.Println("Intercept and block")
 	awaitSendRequest := make(chan struct{})
 	hi.NetworkManager.Router.QueueMessage(&Message{
 		Sender:    pair.Sender,
@@ -170,7 +164,6 @@ func (hi *HttpInterceptor) handleHttp2(initial io.Reader, conn net.Conn) error {
 
 	_ = dialer.SetReadDeadline(time.Now().Add(1 * time.Second))
 
-	hi.Log.Println("Copy data sent")
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 	dataSent := int64(0)
@@ -179,7 +172,6 @@ func (hi *HttpInterceptor) handleHttp2(initial io.Reader, conn net.Conn) error {
 		wg.Done()
 	}(&dataSent)
 
-	hi.Log.Println("MultiReader")
 	_, err = io.Copy(dialer, io.MultiReader(initial, dataBuffer, conn))
 	wg.Wait()
 

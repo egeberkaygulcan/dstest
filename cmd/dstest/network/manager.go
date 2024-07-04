@@ -14,18 +14,27 @@ type SenderReceiverPair struct {
 	Receiver int
 }
 
+type Event struct {
+	Prev *Event
+	Sender int
+	Receiver int
+	MessageId uint64
+	Name string
+}
+
 type Manager struct {
 	Config        *config.Config
 	Log           *log.Logger
 	Router        *Router
 	Interceptors  []Interceptor
 	MessageQueues []*MessageQueue
-	index atomic.Uint64
+	Index atomic.Uint64
 	WaitGroup	  sync.WaitGroup
 	ReplicaIds []int
 	PortMap map[int]SenderReceiverPair
 	MessageType MessageType
-	VectorClocks map[int]map[int]int
+	// VectorClocks map[int]map[int]int
+	ChainClocks [][]Event
 }
 
 func (nm *Manager) Init(config *config.Config, replicaIds []int) {
@@ -37,7 +46,9 @@ func (nm *Manager) Init(config *config.Config, replicaIds []int) {
 	nm.Interceptors = make([]Interceptor, numReplicas * (numReplicas - 1))
 	nm.MessageQueues = make([]*MessageQueue, numReplicas)
 	nm.ReplicaIds = replicaIds
-	nm.VectorClocks = make(map[int]map[int]int)
+	// nm.VectorClocks = make(map[int]map[int]int)
+	nm.ChainClocks = make([][]Event, 0)
+	nm.Index.Store(0)
 
 	nm.Router.Init(nm, numReplicas)
 
@@ -83,10 +94,17 @@ func (nm *Manager) Shutdown() {
 	for _, interceptor := range nm.Interceptors {
 		interceptor.Shutdown()
 	}
+
+	for _, chain := range nm.ChainClocks {
+		nm.Log.Println("Chain: ")
+		for _, elem := range chain {
+			nm.Log.Printf("(%d)-(%d)-(%s)-(%d)", elem.Sender, elem.Receiver, elem.Name, int(elem.MessageId))
+		}
+	}
 }
 
 func (nm *Manager) GenerateUniqueId() uint64 {
-	return nm.index.Add(1) 
+	return nm.Index.Add(1) 
 }
 
 func max(x, y int) int {
@@ -96,18 +114,30 @@ func max(x, y int) int {
 	return y
 }
 
-func (nm *Manager) updateVectorClocks(sender, receiver int) {
-	// Update sender clock
-	nm.VectorClocks[sender][sender]++
+// func (nm *Manager) updateVectorClocks(sender, receiver int) {
+// 	// Update sender clock
+// 	nm.VectorClocks[sender][sender]++
 
-	// Update receiver clock
-	for _, id := range nm.ReplicaIds {
-		if id != receiver {
-			nm.VectorClocks[receiver][id] = max(nm.VectorClocks[receiver][id], nm.VectorClocks[sender][id])
-		} else {
-			nm.VectorClocks[receiver][receiver]++
+// 	// Update receiver clock
+// 	for _, id := range nm.ReplicaIds {
+// 		if id != receiver {
+// 			nm.VectorClocks[receiver][id] = max(nm.VectorClocks[receiver][id], nm.VectorClocks[sender][id])
+// 		} else {
+// 			nm.VectorClocks[receiver][receiver]++
+// 		}
+// 	}
+// }
+
+func (nm *Manager) UpdateChainClocks(sender, receiver int, messageId uint64, name string) {
+	for i, chain := range nm.ChainClocks {
+		if chain[len(chain)-1].Receiver == sender  {
+				nm.ChainClocks[i] = append(nm.ChainClocks[i], Event{&chain[len(chain)-1], sender, receiver, messageId, name})
+				return
 		}
 	}
+
+	elem := []Event{Event{nil, sender, receiver, messageId, name}}
+	nm.ChainClocks = append(nm.ChainClocks, elem)
 }
 
 func (nm *Manager) SendMessage(messageId uint64) {
@@ -116,7 +146,7 @@ func (nm *Manager) SendMessage(messageId uint64) {
 			if mq.Peek().MessageId == messageId {
 				message := mq.PopFront()
 				message.SendMessage()
-				nm.updateVectorClocks(message.Sender, message.Receiver)
+				// nm.updateVectorClocks(message.Sender, message.Receiver)
 			}
 		}
 	}
@@ -131,7 +161,7 @@ func (nm *Manager) GetActions() []*Message {
 		Payload:  Http2CPayload{Request: nil, Writer: nil, Response: nil},
 		Type: "Delay",
 		Name: "Delay",
-		MessageId: nm.GenerateUniqueId(),
+		MessageId: uint64(0),
 		Send:     nil,
 	})
 	actions = append(actions, delayMessage)

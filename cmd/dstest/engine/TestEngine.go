@@ -77,7 +77,7 @@ func (te *TestEngine) Run() {
 				wg.Done()
 			}()
 
-			time.Sleep(1 * time.Second)
+			time.Sleep(time.Duration(te.Config.TestConfig.StartupDuration) * time.Second)
 
 			schedule := make([]Action, 0)
 			for s := 0; s < te.Steps; s++ {
@@ -111,7 +111,7 @@ func (te *TestEngine) Run() {
 			wg.Wait()
 
 			te.Log.Println("Checking for bugs...")
-			if te.ProcessManager.BugCandidate {
+			if !te.ProcessManager.BugCandidate {
 				outputFile, err := os.OpenFile(filepath.Join(te.ProcessManager.Basedir, "schedule.log"), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 				if err != nil {
 					te.Log.Printf("Could not create schedule file.\n Err: %s\n", err)

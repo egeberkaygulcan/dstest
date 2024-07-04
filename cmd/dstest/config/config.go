@@ -18,6 +18,7 @@ type TestConfig struct {
 	Experiments int
 	Iterations  int
 	WaitDuration int
+	StartupDuration int
 }
 
 type SchedulerConfig struct {

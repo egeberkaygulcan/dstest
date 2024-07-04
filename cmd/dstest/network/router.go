@@ -38,6 +38,7 @@ func (r *Router) QueueMessage(m *Message) {
 	// tm :=  m
 	if r.HasConnectivity(tm.Sender, tm.Receiver) {
 		r.NetworkManager.MessageQueues[tm.Receiver].PushBack(tm)
+		r.NetworkManager.UpdateChainClocks(tm.Sender, tm.Receiver, tm.MessageId, tm.Name)
 		// r.Log.Printf("Queued message #%d from %d to %d: %s\n", r.NetworkManager.MessageQueues[tm.Receiver].Len(), tm.Sender, tm.Receiver, (tm.Payload))
 	} else {
 		r.Log.Printf("Message from %d to %d dropped\n", tm.Sender, tm.Receiver)
