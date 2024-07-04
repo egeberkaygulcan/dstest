@@ -1,3 +1,6 @@
- kill $(jps | grep 'etcd' | grep -v 'grep' | awk '{print $1}')
- rm -rf /tmp/etcd
- echo "Killed all etcd instances."
+#!/bin/bash
+set -e
+
+pkill etcd
+rm -rf /tmp/etcd
+echo "Killed all etcd instances."
