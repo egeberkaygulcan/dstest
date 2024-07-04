@@ -24,19 +24,20 @@ type Manager struct {
 	WaitGroup	  sync.WaitGroup
 	ReplicaIds []int
 	PortMap map[int]SenderReceiverPair
-
-	// Scheduler     scheduling.Scheduler
+	MessageType MessageType
+	VectorClocks map[int]map[int]int
 }
 
 func (nm *Manager) Init(config *config.Config, replicaIds []int) {
 	numReplicas := config.ProcessConfig.NumReplicas
 
 	nm.Config = config
+	nm.MessageType = MessageType(config.NetworkConfig.MessageType)
 	nm.Router = new(Router)
 	nm.Interceptors = make([]Interceptor, numReplicas * (numReplicas - 1))
 	nm.MessageQueues = make([]*MessageQueue, numReplicas)
 	nm.ReplicaIds = replicaIds
-	// nm.Scheduler = new(scheduling.BasicScheduler)
+	nm.VectorClocks = make(map[int]map[int]int)
 
 	nm.Router.Init(nm, numReplicas)
 
@@ -49,7 +50,8 @@ func (nm *Manager) Init(config *config.Config, replicaIds []int) {
 		for j := 0; j < numReplicas; j++ {
 			if i != j {
 				id := i*numReplicas+j
-				nm.Interceptors[k] = new(Http2CInterceptor)
+				// nm.Interceptors[k] = new(Http2CInterceptor)
+				nm.Interceptors[k] = new(HttpInterceptor)
 				nm.Interceptors[k].Init(id, nm.Config.NetworkConfig.BaseInterceptorPort+id, nm)
 				nm.PortMap[nm.Config.NetworkConfig.BaseInterceptorPort+id] = SenderReceiverPair{Sender: i, Receiver: j}
 				k++
@@ -87,12 +89,34 @@ func (nm *Manager) GenerateUniqueId() uint64 {
 	return nm.index.Add(1) 
 }
 
+func max(x, y int) int {
+	if x > y {
+		return x
+	}
+	return y
+}
+
+func (nm *Manager) updateVectorClocks(sender, receiver int) {
+	// Update sender clock
+	nm.VectorClocks[sender][sender]++
+
+	// Update receiver clock
+	for _, id := range nm.ReplicaIds {
+		if id != receiver {
+			nm.VectorClocks[receiver][id] = max(nm.VectorClocks[receiver][id], nm.VectorClocks[sender][id])
+		} else {
+			nm.VectorClocks[receiver][receiver]++
+		}
+	}
+}
+
 func (nm *Manager) SendMessage(messageId uint64) {
 	for _, mq := range nm.MessageQueues {
 		if mq.Peek() != nil {
 			if mq.Peek().MessageId == messageId {
 				message := mq.PopFront()
 				message.SendMessage()
+				nm.updateVectorClocks(message.Sender, message.Receiver)
 			}
 		}
 	}
