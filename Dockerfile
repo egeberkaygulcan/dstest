@@ -42,6 +42,18 @@ WORKDIR /src/zookeeper
 RUN mvn clean package -DskipTests
 
 ###############################################################################
+# Stage 2B (etcd)                                                             #
+###############################################################################
+# Image from https://hub.docker.com/_/golang
+FROM golang:1.22.2 AS go-builder
+
+RUN git clone https://github.com/etcd-io/etcd.git /src/etcd
+WORKDIR /src/etcd
+RUN go mod download
+RUN go mod verify
+RUN go build -o /src/etcd/bin/etcd /src/etcd/etcd/main.go
+
+###############################################################################
 # Stage 3 (to create a downsized "container executable", ~5MB)                #
 ###############################################################################
 FROM openjdk:17
