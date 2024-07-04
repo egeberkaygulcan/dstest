@@ -5,6 +5,7 @@ import (
 	"fmt"
 	agentv1 "github.com/aunum/gold/pkg/v1/agent"
 	"github.com/aunum/gold/pkg/v1/common"
+	"github.com/egeberkaygulcan/dstest/cmd/dstest/faults"
 	"github.com/egeberkaygulcan/dstest/cmd/dstest/network"
 	"github.com/egeberkaygulcan/dstest/cmd/dstest/scheduling/ql"
 	"github.com/segmentio/fasthash/fnv1a"
@@ -54,7 +55,7 @@ func StateHash(messages []*network.Message) uint32 {
 }
 
 // Returns a random index from available messages
-func (s *QLScheduler) Next(messages []*network.Message) int {
+func (s *QLScheduler) Next(messages []*network.Message, faults []*faults.Fault, context faults.FaultContext) SchedulerDecision {
 	// visualize the agent ??
 	s.agent.Visualize()
 
@@ -71,9 +72,14 @@ func (s *QLScheduler) Next(messages []*network.Message) int {
 	action, err := s.agent.Action(state, messages)
 	if err != nil {
 		fmt.Println("ERROR GETTING ACTION:", err)
-		return 0
+		return SchedulerDecision{
+			DecisionType: NoOp,
+		}
 	}
 
 	fmt.Println("QL chose action:", action)
-	return action
+	return SchedulerDecision{
+		DecisionType: SendMessage,
+		Index:        action,
+	}
 }
