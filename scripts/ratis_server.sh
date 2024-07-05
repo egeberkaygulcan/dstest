@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 BIN=../../../ratis/ratis-examples/src/main/bin
 PEERS=n0:127.0.0.1:$1,n1:127.0.0.1:$2,n2:127.0.0.1:$3;
 

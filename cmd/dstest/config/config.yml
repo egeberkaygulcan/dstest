@@ -1,22 +1,23 @@
 TestConfig:
   Name: ratis-test
   Experiments: 1
-  Iterations: 10
-  WaitDuration: 50 # Time duration to wait between execution steps in milliseconds
-SchedulerConfig: #TODO - Seperate the scheduler param
-  Type: "ql"
-  Steps: 100
+  Iterations: 1
+  WaitDuration: 30
+  StartupDuration: 1 # seconds
+SchedulerConfig:
+  Type: "random"
+  Steps: 50
+  ClientRequests: 2
   Seed: 42
-  Params: {}
+  Params: {"client_request_probability": 0.01}
 NetworkConfig:
   BaseReplicaPort: 6000
   BaseInterceptorPort: 10000
-  Protocol: "http2c"
+  Protocol: "http"
+  MessageType: GRPC
 FaultConfig:
   Faults:
     - Type: dummy # does nothing
-      Params: {}
-    - Type: dummy
       Params: {}
     - Type: restart
       Params:
@@ -27,24 +28,21 @@ FaultConfig:
     - Type: crash
       Params:
         node: 0
-#    - Type: "Partition"
-#      Params: # these are mostly for testing, to see if the marshaller works
-#        StartQuantity: 1
-#        StartUnit: "Messages" # or "Seconds"
-#        DurationQuantity: 3
-#        DurationUnit: "Messages" # or "Seconds"
-#        Nodes: [["n0", "n1"], ["n2", "n3"]]
 ProcessConfig:
   NumReplicas: 3
   Timeout: 10
   OutputDir: output
   ReplicaScript: scripts/ratis_server.sh
-  ClientScripts: [ client.sh ]
+  ClientScripts:
+    - scripts/ratis_client_0.sh
+    # - scripts/ratis_client_1.sh
+    # - scripts/ratis_client_2.sh
+    # - scripts/ratis_client_3.sh
   CleanScript: scripts/ratis_clean.sh
   ReplicaParams:
-    # - "6000 6001 6002 n0"
-    # - "6000 6001 6002 n1"
-    # - "6000 6001 6002 n2"
     - "6000 10001 10002 n0"
-    - "10000 6001 10002 n1"
-    - "10000 10001 6002 n2"
+    - "10003 6001 10005 n1"
+    - "10006 10007 6002 n2"
+    # - "6000 10001 10002 n0"
+    # - "10003 6001 10005 n1"
+    # - "10006 10007 6002 n2"

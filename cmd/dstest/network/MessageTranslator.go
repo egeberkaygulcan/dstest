@@ -1,11 +1,12 @@
 package network
 
 import (
-	// "io"
 	"log"
-	"net/http/httputil"
-	"os"
 	"strings"
+	"os"
+
+	"golang.org/x/net/http2"
+	"golang.org/x/net/http2/hpack"
 )
 
 type MessageTranslator interface {
@@ -32,30 +33,32 @@ func newGRPCTranslator() *GRPCTranslator {
 }
 
 func (t *GRPCTranslator) Translate(message *Message) *Message {
-	payload := message.Payload.(Http2CPayload)
+	f := message.Payload.(*http2.Framer)
 
 	message.Type = GRPC
 
-	// buf := new(strings.Builder)
-	// _, err := io.Copy(buf, payload.Request.Body)
-	// if err != nil {
-	// 	t.Log.Println("Body read error.")
-	// }
-	port := strings.Split(payload.Request.Host, ":")[1]
-	t.Log.Println("Request host port: " + port)
-	
-	var uri []string
-	if payload.Request != nil {
-		uri = strings.Split(payload.Request.URL.RequestURI(), "/")
-		message.Name = uri[len(uri)-1]
-	} else {
-		responseBody, err := httputil.DumpResponse(payload.Response, true)
+	decoder := hpack.NewDecoder(1024, nil)
+	for message.Name == "" {
+		frame, err := f.ReadFrame()
 		if err != nil {
-			t.Log.Println("Could not dump payload request.")
+			t.Log.Printf("Error while reading frames: %s\n", err)
+			break
 		}
 
-		t.Log.Println("Response payload: " + string(responseBody))
+		switch ty := frame.(type) {
+		case *http2.HeadersFrame:
+			out, err := decoder.DecodeFull(ty.HeaderBlockFragment())
+			if err != nil {
+				t.Log.Printf("Error while decoding frames: %s\n", err)
+			}
+			for _, v := range out {
+				if v.Name == ":path" {
+					path := strings.Split(v.Value, "/")
+					message.Name = path[len(path)-1]
+				}
+				
+			}
+		}
 	}
-	
 	return message
 }

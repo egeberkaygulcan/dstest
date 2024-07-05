@@ -58,8 +58,11 @@ func (te *TestEngine) Init(config *config.Config) error {
 
 	te.Scheduler = scheduling.NewScheduler(scheduling.SchedulerType(config.SchedulerConfig.Type))
 	te.NetworkManager = new(network.Manager)
-	// te.NetworkManager.Init(config)
 	te.ProcessManager = new(process.ProcessManager)
+
+	if scheduling.SchedulerType(config.SchedulerConfig.Type) == scheduling.Pctcp {
+		config.SchedulerConfig.Params["network_manager"] = te.NetworkManager
+	}
 	// te.ProcessManager.Init(config, te.Iterations)
 	te.FaultManager = new(faults.FaultManager)
 
@@ -74,9 +77,9 @@ func (te *TestEngine) Init(config *config.Config) error {
 
 func (te *TestEngine) Run() error {
 	for i := 0; i < te.Experiments; i++ {
-		te.Log.Printf("Starting experiment %d...\n", i)
+		te.Log.Printf("Starting experiment %d...\n", i+1)
 
-		te.Scheduler.Init()
+		te.Scheduler.Init(te.Config)
 		for j := 0; j < te.Iterations; j++ {
 			te.Log.Printf("Starting iteration %d\n", j+1)
 
@@ -91,8 +94,6 @@ func (te *TestEngine) Run() error {
 			if err != nil {
 				return fmt.Errorf("Error initializing FaultManager: %s", err.Error())
 			}
-			// print all faults
-			fmt.Println("\nFaults:")
 			te.FaultManager.PrintFaults()
 
 			te.ProcessManager.Init(te.Config, te.ReplicaIds, j)
@@ -109,11 +110,23 @@ func (te *TestEngine) Run() error {
 				wg.Done()
 			}()
 
-			time.Sleep(1 * time.Second)
+			time.Sleep(time.Duration(te.Config.TestConfig.StartupDuration) * time.Second)
 
 			schedule := make([]Action, 0)
-			for s := 0; s < te.Steps; s++ {
+			for s := 0; s < te.Steps; {
+				if te.ProcessManager.BugCandidate {
+					break
+				}
 				actions := te.NetworkManager.GetActions()
+				sc := te.Scheduler.GetClientRequest()
+				if sc >= 0 {
+					te.ProcessManager.RunClient(sc)
+					schedule = append(schedule, Action{
+						Sender:   -1,
+						Receiver: -1,
+						Name:     fmt.Sprintf("ClientRequest_%d_%d", s, sc),
+					})
+				}
 				// TODO - Get fault from scheduler
 				var faultContext faults.FaultContext = NewEngineFaultContext(te)
 				decision := te.Scheduler.Next(actions, te.FaultManager.GetFaults(), faultContext)
@@ -126,6 +139,7 @@ func (te *TestEngine) Run() error {
 						Receiver: actions[action].Receiver,
 						Name:     actions[action].Name,
 					})
+					s++
 				}
 
 				if decision.DecisionType == scheduling.InjectFault {
@@ -161,6 +175,7 @@ func (te *TestEngine) Run() error {
 				outputFile.Close()
 			}
 			te.Log.Println("Iteration complete.")
+			te.Scheduler.NextIteration()
 		}
 		te.Scheduler.Reset()
 	}
