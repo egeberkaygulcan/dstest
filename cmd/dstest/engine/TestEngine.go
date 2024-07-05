@@ -94,8 +94,6 @@ func (te *TestEngine) Run() error {
 			if err != nil {
 				return fmt.Errorf("Error initializing FaultManager: %s", err.Error())
 			}
-			// print all faults
-			fmt.Println("\nFaults:")
 			te.FaultManager.PrintFaults()
 
 			te.ProcessManager.Init(te.Config, te.ReplicaIds, j)
