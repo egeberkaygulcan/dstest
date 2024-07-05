@@ -69,4 +69,5 @@ func (s *ReplayScheduler) Next(messages []*network.Message, faults []*faults.Fau
 }
 
 func (s *ReplayScheduler) GetClientRequest() int {
+	return -1
 }

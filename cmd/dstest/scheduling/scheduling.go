@@ -57,7 +57,7 @@ func NewScheduler(schedulerType SchedulerType) Scheduler {
 		return new(RandomScheduler)
 	case QL:
 		return new(QLScheduler)
-	case PCTCP:
+	case Pctcp:
 		return new(PCTCP)
 	case Replay:
 		return new(ReplayScheduler)
