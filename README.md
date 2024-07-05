@@ -13,13 +13,14 @@ You'll need to [install Docker](https://docs.docker.com/get-docker/).
 #### Generating the image
 We are not publishing these at the moment, so you'll need to build the image yourself.
 ```shell
-$ docker build -t egeberkaygulcan/dstest .
+docker build -t egeberkaygulcan/dstest .
 ```
+This can take a few minutes, as it will download and install all the dependencies for the software and examples.
 
 #### Running the image
 This will run the image with the default configuration for Apache Ratis.
 ```shell
-$ docker run egeberkaygulcan/dstest
+docker run egeberkaygulcan/dstest
 ```
 
 ### Running from source
