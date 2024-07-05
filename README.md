@@ -46,7 +46,7 @@ This section contains the general configuration for the test.
 
 ###### SchedulerConfig
 This section contains the configuration for the scheduler: which scheduler to use, and the parameters to pass to the scheduler.
-- `Type`: The name of the scheduler to use. Possible values are `Random`, `QL`, and `PCTCP`.
+- `Type`: The name of the scheduler to use. Possible values are `Random`, `QL`, and `PCT`.
 - `Steps`: The number of steps to run in the scheduler.
 - `ClientRequests`: The number of client requests to generate per experiment.
 - `Seed`: The seed to use for the random number generator.

@@ -4,10 +4,10 @@ TestConfig:
   Iterations: 10
   WaitDuration: 50 # Time duration to wait between execution steps in milliseconds
 SchedulerConfig:
-  Type: "random"
-  Steps: 100
+  Type: "pct"
+  Steps: 20
   Seed: 42
-  Params: {"client_request_probability": 0.01} 
+  Params: {"client_request_probability": 0.01, "d": 2} 
 NetworkConfig:
   BaseReplicaPort: 6000
   BaseInterceptorPort: 10000
