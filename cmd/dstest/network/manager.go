@@ -68,9 +68,11 @@ func (nm *Manager) Init(config *config.Config, replicaIds []int) error {
 		nm.MessageQueues[i].Init()
 		for j := 0; j < numReplicas; j++ {
 			if i != j {
-				id := i*numReplicas+j
-				// nm.Interceptors[k] = new(Http2CInterceptor)
-				nm.Interceptors[k] = new(HttpInterceptor)
+				id := i*numReplicas + j
+				nm.Interceptors[k], err = createInterceptor(config.NetworkConfig.Protocol)
+				if err != nil {
+					return fmt.Errorf("Error creating interceptor: %s", err.Error())
+				}
 				nm.Interceptors[k].Init(id, nm.Config.NetworkConfig.BaseInterceptorPort+id, nm)
 				nm.PortMap[nm.Config.NetworkConfig.BaseInterceptorPort+id] = SenderReceiverPair{Sender: i, Receiver: j}
 				k++
@@ -90,7 +92,12 @@ func (nm *Manager) Run() {
 	for i := 0; i < len(nm.Interceptors); i++ {
 		nm.WaitGroup.Add(1)
 		go func(index int) {
-			nm.Interceptors[index].Run()
+			err := nm.Interceptors[index].Run()
+			if err != nil {
+				errStr := fmt.Errorf("Error running interceptor: %s", err.Error())
+				fmt.Println(errStr)
+				return
+			}
 			nm.WaitGroup.Done()
 		}(i)
 	}
