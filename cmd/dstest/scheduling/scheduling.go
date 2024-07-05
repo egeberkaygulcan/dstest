@@ -1,14 +1,17 @@
 package scheduling
 
 import (
+	"github.com/egeberkaygulcan/dstest/cmd/dstest/config"
 	"github.com/egeberkaygulcan/dstest/cmd/dstest/faults"
 	"github.com/egeberkaygulcan/dstest/cmd/dstest/network"
 )
 
 type Scheduler interface {
-	Init()
+	Init(config *config.Config)
 	Reset()
 	Shutdown()
+	NextIteration()
+	GetClientRequest() int
 	Next([]*network.Message, []*faults.Fault, faults.FaultContext) SchedulerDecision
 	ApplyFault(*faults.Fault) error
 }
@@ -31,6 +34,7 @@ type SchedulerType string
 const (
 	Random SchedulerType = "random"
 	QL     SchedulerType = "ql"
+	Pctcp  SchedulerType = "pctcp"
 )
 
 func NewScheduler(schedulerType SchedulerType) Scheduler {

@@ -10,23 +10,26 @@ import (
 )
 
 type TestConfig struct {
-	Name         string
-	Experiments  int
-	Iterations   int
-	WaitDuration int
+	Name            string
+	Experiments     int
+	Iterations      int
+	WaitDuration    int
+	StartupDuration int
 }
 
 type SchedulerConfig struct {
-	Type   string
-	Steps  int
-	Seed   int
-	Params map[string]string
+	Type           string
+	Steps          int
+	ClientRequests int
+	Seed           int
+	Params         map[string]any
 }
 
 type NetworkConfig struct {
 	BaseReplicaPort     int
 	BaseInterceptorPort int
 	Protocol            string
+	MessageType         string
 }
 
 type FaultConfig struct {
@@ -62,6 +65,12 @@ func ModifyFilepath(config *Config) {
 	config.ProcessConfig.ReplicaScript = filepath.Join(wd, config.ProcessConfig.ReplicaScript)
 	if len(config.ProcessConfig.CleanScript) > 0 {
 		config.ProcessConfig.CleanScript = filepath.Join(wd, config.ProcessConfig.CleanScript)
+	}
+
+	if len(config.ProcessConfig.ClientScripts) > 0 {
+		for i := 0; i < len(config.ProcessConfig.ClientScripts); i++ {
+			config.ProcessConfig.ClientScripts[i] = filepath.Join(wd, config.ProcessConfig.ClientScripts[i])
+		}
 	}
 }
 
