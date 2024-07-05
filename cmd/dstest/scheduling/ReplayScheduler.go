@@ -71,8 +71,6 @@ func (s *ReplayScheduler) Init(config *config.Config) {
 	}
 
 	s.index = 0
-
-	panic("at the disco")
 }
 
 func (s *ReplayScheduler) NextIteration() {}
