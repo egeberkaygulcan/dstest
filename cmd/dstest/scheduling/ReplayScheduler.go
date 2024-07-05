@@ -89,6 +89,46 @@ func (s *ReplayScheduler) Next(messages []*network.Message, faults []*faults.Fau
 		}
 	}
 
+	nextAction := s.actions[s.index]
+
+	// Next action is a client request
+	// FIXME: should this go into GetClientRequest?
+	if nextAction.GetType() == actions.ClientRequest {
+		// check if client requests are available
+		// FIXME: is this correct?!
+		if s.Config.SchedulerConfig.ClientRequests > 0 {
+			s.Config.SchedulerConfig.ClientRequests--
+			s.index++
+			return SchedulerDecision{
+				DecisionType: SendMessage,
+				Index:        0,
+			}
+		}
+		return SchedulerDecision{
+			DecisionType: NoOp,
+		}
+	}
+
+	// Next action is a message
+	if nextAction.GetType() == actions.SendMessage {
+		// search for the action with same sender and receiver
+		for i, message := range messages {
+			if message.Sender == nextAction.(*actions.DeliverMessageAction).Sender &&
+				message.Receiver == nextAction.(*actions.DeliverMessageAction).Receiver &&
+				message.Name == nextAction.(*actions.DeliverMessageAction).Name {
+				s.index++
+				return SchedulerDecision{
+					DecisionType: SendMessage,
+					Index:        i,
+				}
+			}
+		}
+		// if not found, return NoOp… maybe next time?
+		return SchedulerDecision{
+			DecisionType: NoOp,
+		}
+	}
+
 	actionStr := s.actions[s.index]
 	fmt.Printf("Selecting action: %s\n", actionStr)
 
