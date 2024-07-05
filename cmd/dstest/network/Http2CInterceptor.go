@@ -60,15 +60,16 @@ func (hi *Http2CInterceptor) Run() (err error) {
 	// check if the interceptor is initialized
 	if !hi.isInitialized {
 		hi.Log.Fatalf("BaseInterceptor is not initialized\n")
-		return
+		return fmt.Errorf("BaseInterceptor is not initialized")
 	}
 
 	// log the port
 	hi.Log.Printf("Running HTTP interceptor on port %d\n", hi.Port)
 
 	err = hi.Server.ListenAndServe()
-	if err != nil && err != http.ErrServerClosed{
+	if err != nil && err != http.ErrServerClosed {
 		hi.Log.Printf("Error listening on port %d: %s\n", hi.Port, err.Error())
+		return fmt.Errorf("Error listening on port %d: %s", hi.Port, err.Error())
 	}
 
 	return nil
