@@ -1,0 +1,39 @@
+TestConfig:
+  Name: zookeeper-test
+  Experiments: 1
+  Iterations: 1
+  WaitDuration: 50 # Time duration to wait between execution steps in milliseconds
+SchedulerConfig:
+  Type: "random"
+  Steps: 10
+  Seed: 42
+  Params: {"client_request_probability": 0.01} 
+NetworkConfig:
+  BaseReplicaPort: 6000
+  BaseInterceptorPort: 10000
+  Protocol: "http"
+  MessageType: GRPC
+FaultConfig:
+  Faults: []
+    # - Type: dummy # does nothing
+    #   Params: {}
+    # - Type: restart
+    #   Params:
+    #     node: 0
+    # - Type: restart
+    #   Params:
+    #     node: 1
+    # - Type: crash
+    #   Params:
+    #     node: 0
+ProcessConfig:
+  NumReplicas: 3
+  Timeout: 10
+  OutputDir: output
+  ReplicaScript: scripts/zk_server.sh
+  ClientScripts: [ ]
+  CleanScript: scripts/zk_clean.sh
+  ReplicaParams:
+    - "6000 10001 10002 2181 1"
+    - "10003 6001 10005 2182 2"
+    - "10006 10007 6002 2183 3"

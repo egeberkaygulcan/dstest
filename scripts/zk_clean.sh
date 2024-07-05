@@ -1,5 +1,5 @@
 #!/bin/bash
-BIN=../zookeeper
+BIN=../../../zookeeper
 for dir in $BIN/conf/dstest/*/     # list directories in the form "/tmp/dirname/"
 do
     dir=${dir%*/}      # remove the trailing "/"
