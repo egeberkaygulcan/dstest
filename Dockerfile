@@ -56,7 +56,12 @@ RUN ./scripts/build.sh
 ###############################################################################
 # Stage 3 (to create a downsized "container executable", ~5MB)                #
 ###############################################################################
-FROM openjdk:17
+FROM ubuntu:24.04
+
+# Install Java and Go runtime dependencies
+RUN apt-get update
+RUN apt-get install -y openjdk-17-jre-headless golang-go
+
 WORKDIR /root/
 COPY --from=builder /go/src/dstest /root/dstest
 COPY --from=java-builder /src/ratis /root/ratis
