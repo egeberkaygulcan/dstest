@@ -3,17 +3,19 @@ TestConfig:
   Experiments: 1
   Iterations: 10
   WaitDuration: 50 # Time duration to wait between execution steps in milliseconds
+  StartupDuration: 1 # seconds
 SchedulerConfig: #TODO - Seperate the scheduler param
   Type: "random"
   Steps: 100
   Seed: 42
-  Params: {}
+  Params: {"client_request_probability": 0.01}
 FaultConfig:
   Faults: []
 NetworkConfig:
   BaseReplicaPort: 6000
   BaseInterceptorPort: 10000
   Protocol: "http2c"
+  MessageType: GRPC
 ProcessConfig:
   NumReplicas: 3
   Timeout: 10
