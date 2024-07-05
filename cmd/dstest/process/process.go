@@ -122,7 +122,7 @@ func (pm *ProcessManager) Run() {
 	}
 
 	if !bug {
-		// pm.deleteDir()
+		pm.deleteDir()
 	} else {
 		pm.Log.Printf("Found bug candidate at iteration %d\n", pm.Iteration)
 		pm.BugCandidate = true
