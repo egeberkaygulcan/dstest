@@ -10,26 +10,26 @@ import (
 )
 
 type TestConfig struct {
-	Name         string
-	Experiments  int
-	Iterations   int
-	WaitDuration int
+	Name            string
+	Experiments     int
+	Iterations      int
+	WaitDuration    int
 	StartupDuration int
 }
 
 type SchedulerConfig struct {
-	Type   string
-	Steps  int
+	Type           string
+	Steps          int
 	ClientRequests int
-	Seed   int
-	Params map[string]any
+	Seed           int
+	Params         map[string]any
 }
 
 type NetworkConfig struct {
 	BaseReplicaPort     int
 	BaseInterceptorPort int
-	MessageType string
 	Protocol            string
+	MessageType         string
 }
 
 type FaultConfig struct {
