@@ -60,10 +60,6 @@ func (nm *Manager) Init(config *config.Config, replicaIds []int) error {
 	for i := 0; i < numReplicas; i++ {
 		nm.MessageQueues[i] = new(MessageQueue)
 		var err error = nil
-		nm.Interceptors[i], err = createInterceptor(config.NetworkConfig.Protocol)
-		if err != nil {
-			return fmt.Errorf("Error creating interceptor: %s", err.Error())
-		}
 
 		nm.MessageQueues[i].Init()
 		for j := 0; j < numReplicas; j++ {
