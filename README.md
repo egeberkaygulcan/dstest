@@ -74,9 +74,27 @@ This section contains the configuration on how to spawn the processes of the sys
 - `CleanScript`: The script to run to clean up the system under test.
 - `ReplicaParams`: A list of parameters to pass to the replica script; one for each replica.
 
-## Running the examples
+## Usage
 
 See the [configs](configs/README.md) directory for examples of how to run DSTest with different distributed systems and sample configurations.
+
+## Extensibility
+
+For any user who extends a new scheduler to the system, the following ```Scheduler``` interface needs to be implemented.
+
+```go
+type Scheduler interface {
+	Init(config *config.Config)
+	Reset()
+	Shutdown()
+	NextIteration()
+	GetClientRequest() int
+	Next([]*network.Message, []*faults.Fault, faults.FaultContext) SchedulerDecision
+	ApplyFault(*faults.Fault) error
+}
+```
+
+The interface requires two main functions for decision-making. When called, ```Next``` decides on the next node to be scheduled and the fault to be injected, if any. ```GetClientRequest``` chooses when and which client request is sent.
 
 ## License
 See [LICENSE](LICENSE.md).
