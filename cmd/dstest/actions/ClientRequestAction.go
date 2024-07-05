@@ -1,7 +1,7 @@
 package actions
 
 type ClientRequestAction struct {
-	Name string
+	ClientId int
 }
 
 // make sure ClientRequestAction implements the Action interface
