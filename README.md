@@ -3,7 +3,8 @@
 DSTest is a Controlled Concurrency Testing Framework tool to test distributed systems without modifying the source code of the system under test and is programming language independent.
 
 
-![dstest](https://github.com/egeberkaygulcan/dstest/assets/111654404/09d74bc8-2580-47df-9063-15b60e7797aa)
+![dstest](https://github.com/egeberkaygulcan/dstest/assets/111654404/86f7ea1c-abb2-4e65-8212-2751fdab646f)
+
 
 
 ## Prerequisites
