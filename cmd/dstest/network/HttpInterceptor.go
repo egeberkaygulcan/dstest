@@ -167,8 +167,8 @@ func (hi *HttpInterceptor) handleHttp2(initial io.Reader, conn net.Conn) error {
 		return err
 	}
 
-	_ = dialer.SetReadDeadline(time.Now().Add(100 * time.Millisecond))
-	_ = dialer.SetWriteDeadline(time.Now().Add(100 * time.Millisecond))
+	_ = dialer.SetReadDeadline(time.Now().Add(time.Duration(hi.NetworkManager.Config.TestConfig.WaitDuration) * time.Millisecond))
+	_ = dialer.SetWriteDeadline(time.Now().Add(time.Duration(hi.NetworkManager.Config.TestConfig.WaitDuration) * time.Millisecond))
 
 	wg := sync.WaitGroup{}
 	wg.Add(1)
