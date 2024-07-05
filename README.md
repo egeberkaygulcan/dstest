@@ -5,7 +5,7 @@ DSTest is a Controlled Concurrency Testing Framework tool to test distributed sy
 ## Prerequisites
 
 > [!NOTE]
-> Code was tested on macOS on arm64 architecture. Other platforms may require additional setup.
+> Code was tested on Linux and macOS. Windows is not supported at the moment.
 
 ### Running via Docker (recommended)
 You'll need to [install Docker](https://docs.docker.com/get-docker/).
