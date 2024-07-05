@@ -12,7 +12,7 @@ SchedulerConfig:
 NetworkConfig:
   BaseReplicaPort: 6000
   BaseInterceptorPort: 10000
-  Protocol: "http2c"
+  Protocol: http
 ProcessConfig:
   NumReplicas: 3
   Timeout: 10
