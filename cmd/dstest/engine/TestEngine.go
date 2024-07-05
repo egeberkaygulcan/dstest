@@ -56,7 +56,13 @@ func (te *TestEngine) Init(config *config.Config) error {
 		te.ReplicaIds[i] = i
 	}
 
-	te.Scheduler = scheduling.NewScheduler(scheduling.SchedulerType(config.SchedulerConfig.Type))
+	// Initialize scheduler
+	scheduler, err := scheduling.NewScheduler(scheduling.SchedulerType(config.SchedulerConfig.Type))
+	if err != nil {
+		return fmt.Errorf("Error initializing scheduler: %s", err.Error())
+	}
+	te.Scheduler = scheduler
+
 	te.NetworkManager = new(network.Manager)
 	te.ProcessManager = new(process.ProcessManager)
 
