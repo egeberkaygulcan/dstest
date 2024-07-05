@@ -36,13 +36,15 @@ This section contains the general configuration for the test.
 - `Experiments`: The number of experiments to run.
 - `Iterations`: The number of iterations to run per experiment.
 - `WaitDuration`: The duration to wait between execution steps, in milliseconds.
+- `StartupDuration`: The duration to wait for the system under test to start up before scheduling the first step, in seconds.
 
 ###### SchedulerConfig
 This section contains the configuration for the scheduler: which scheduler to use, and the parameters to pass to the scheduler.
-- `Type`: The name of the scheduler to use.
+- `Type`: The name of the scheduler to use. Possible values are `Random`, `QL`, and `PCTCP`.
 - `Steps`: The number of steps to run in the scheduler.
+- `ClientRequests`: The number of client requests to generate per experiment.
 - `Seed`: The seed to use for the random number generator.
-- `Params`: A map of parameters to pass to the scheduler.
+- `Params`: A map of parameters to pass to the scheduler. Each scheduler has its own set of parameters.
 
 ###### FaultConfig
 This section contains the configuration for the fault injector.
@@ -54,6 +56,8 @@ This section contains the configuration for the fault injector.
 This section contains the configuration for the network, namely the ports to use for the replicas and their interceptors.
 - `BaseReplicaPort`: The base port number to use for replicas. Each of the `N` replicas will be assigned a port number starting from this value (from `BaseReplicaPort` to `BaseReplicaPort + N - 1`).
 - `BaseInterceptorPort`: The base port number to use for network interceptors. Each of the `M` interceptors will be assigned a port number starting from this value (from `BaseInterceptorPort` to `BaseInterceptorPort + M - 1`).
+- `Protocol`: The protocol to use for the network. Possible values are `http` and `tcp`.
+- `MessageType`: The message type to use for the network. Just `GRPC` is supported for now.
 
 ###### ProcessConfig
 This section contains the configuration on how to spawn the processes of the system under test.
