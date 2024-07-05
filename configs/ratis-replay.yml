@@ -1,0 +1,29 @@
+TestConfig:
+  Name: ratis-replay
+  Experiments: 1
+  Iterations: 10
+  WaitDuration: 50 # Time duration to wait between execution steps in milliseconds
+SchedulerConfig:
+  Type: "replay"
+  Steps: 100
+  Seed: 42
+  Params:
+    Filename: "../../output/ratis-test_random_0/schedule.log"
+NetworkConfig:
+  BaseReplicaPort: 6000
+  BaseInterceptorPort: 10000
+  Protocol: "http2c"
+ProcessConfig:
+  NumReplicas: 3
+  Timeout: 10
+  OutputDir: output
+  ReplicaScript: scripts/ratis_server.sh
+  ClientScripts: [ client.sh ]
+  CleanScript: scripts/ratis_clean.sh
+  ReplicaParams:
+    # - "6000 6001 6002 n0"
+    # - "6000 6001 6002 n1"
+    # - "6000 6001 6002 n2"
+    - "6000 10001 10002 n0"
+    - "10000 6001 10002 n1"
+    - "10000 10001 6002 n2"
