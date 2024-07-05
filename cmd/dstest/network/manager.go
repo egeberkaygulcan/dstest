@@ -76,7 +76,6 @@ func (nm *Manager) Init(config *config.Config, replicaIds []int) error {
 		}
 	}
 
-	// FIXME: This is a temporary solution to avoid nil pointer dereference
 	nm.Log = log.New(log.Writer(), "[NetworkManager] ", log.LstdFlags)
 
 	nm.Log.Println("Network manager initialized")

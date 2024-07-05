@@ -25,14 +25,22 @@ type Action interface {
 	GetType() ActionType
 }
 
-func NewAction(actionType ActionType, params map[string]string) Action {
+func NewAction(actionType ActionType, params map[string]interface{}) Action {
 	switch actionType {
 	case SendMessage:
-		return &DeliverMessageAction{}
+		return &DeliverMessageAction{
+			Sender:   params["sender"].(int),
+			Receiver: params["receiver"].(int),
+			Name:     params["name"].(string),
+		}
 	case InjectFault:
-		return &InjectFaultAction{}
+		return &InjectFaultAction{
+			// TODO: Implement
+		}
 	case ClientRequest:
-		return &ClientRequestAction{}
+		return &ClientRequestAction{
+			ClientId: params["clientId"].(int),
+		}
 	default:
 		return nil
 	}

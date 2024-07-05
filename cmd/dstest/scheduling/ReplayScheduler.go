@@ -22,6 +22,11 @@ type ReplayScheduler struct {
 // assert ReplayScheduler implements the Scheduler interface
 var _ Scheduler = &ReplayScheduler{}
 
+type UnparsedAction struct {
+	ActionType actions.ActionType
+	Action     map[string]interface{}
+}
+
 func (s *ReplayScheduler) Init(config *config.Config) {
 	s.Config = config
 
@@ -34,19 +39,20 @@ func (s *ReplayScheduler) Init(config *config.Config) {
 	}
 
 	// check if file exists
-	actions, err := os.ReadFile(filepath.Clean(filename))
+	scheduleActions, err := os.ReadFile(filepath.Clean(filename))
 	if err != nil {
 		fmt.Printf("Error reading actions file: %s\n", err)
 		return
 	}
 
 	// read actions from file (one per line)
-	actionStrings := strings.Split(strings.TrimSpace(string(actions)), "\n")
+	actionStrings := strings.Split(strings.TrimSpace(string(scheduleActions)), "\n")
 
 	// convert each string into an action
 	for _, actionStr := range actionStrings {
-		actionEntry := []byte(actionStr)
-		err := json.Unmarshal(actionEntry, actionStr)
+		fmt.Printf("Action: %s\n", actionStr)
+		var actionEntry UnparsedAction
+		err := json.Unmarshal([]byte(actionStr), &actionEntry)
 		if err != nil {
 			fmt.Printf("Error parsing action: %s\n", err)
 			continue

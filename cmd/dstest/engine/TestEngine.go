@@ -128,7 +128,6 @@ func (te *TestEngine) Run() error {
 					}
 					schedule = append(schedule, action)
 				}
-				// TODO - Get fault from scheduler
 				var faultContext faults.FaultContext = NewEngineFaultContext(te)
 				decision := te.Scheduler.Next(enabledMessages, te.FaultManager.GetFaults(), faultContext)
 
