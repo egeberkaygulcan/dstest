@@ -18,7 +18,7 @@ type QLScheduler struct {
 	agent *ql.Agent
 }
 
-// assert RandomScheduler implements the Scheduler interface
+// assert QLScheduler implements the Scheduler interface
 var _ Scheduler = &QLScheduler{}
 
 var DefaultQLSchedulerConfig = &ql.AgentConfig{

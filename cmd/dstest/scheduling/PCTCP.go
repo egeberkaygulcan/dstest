@@ -1,6 +1,7 @@
 package scheduling
 
 import (
+	"github.com/egeberkaygulcan/dstest/cmd/dstest/faults"
 	"math/rand"
 
 	"github.com/egeberkaygulcan/dstest/cmd/dstest/config"
@@ -13,11 +14,14 @@ type PCTCP struct {
 	RequestQuota             int
 	NumClientTypes           int
 	ClientRequestProbability float64
-	NetworkManager *network.Manager
-	Rand *rand.Rand
-	Depth int
-	PriorityChangePoints []int
+	NetworkManager           *network.Manager
+	Rand                     *rand.Rand
+	Depth                    int
+	PriorityChangePoints     []int
 }
+
+// assert PCTCP implements the Scheduler interface
+var _ Scheduler = &PCTCP{}
 
 func (s *PCTCP) Init(config *config.Config) {
 	s.Config = config
@@ -27,7 +31,7 @@ func (s *PCTCP) Init(config *config.Config) {
 	s.NetworkManager = config.SchedulerConfig.Params["network_manager"].(*network.Manager)
 	s.Depth = config.SchedulerConfig.Params["d"].(int)
 	s.PriorityChangePoints = make([]int, s.Depth-1)
-	for i := 0; i < s.Depth - 1; i++ {
+	for i := 0; i < s.Depth-1; i++ {
 		s.PriorityChangePoints[i] = s.DistinctRandomInteger(s.Config.SchedulerConfig.Steps)
 	}
 	s.Rand = rand.New(rand.NewSource(int64(s.Config.SchedulerConfig.Seed)))
@@ -66,8 +70,11 @@ func (s *PCTCP) Shutdown() {
 }
 
 // Returns a random index from available messages
-func (s *PCTCP) Next(messages []*network.Message, iteration int) int {
-	return s.Rand.Intn(len(messages))
+func (s *PCTCP) Next(messages []*network.Message, faults []*faults.Fault, context faults.FaultContext) SchedulerDecision {
+	return SchedulerDecision{
+		DecisionType: SendMessage,
+		Index:        s.Rand.Intn(len(messages)),
+	}
 }
 
 func (s *PCTCP) GetClientRequest() int {

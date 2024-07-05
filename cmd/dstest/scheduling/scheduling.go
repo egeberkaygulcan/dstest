@@ -48,6 +48,7 @@ const (
 	Random SchedulerType = "random"
 	QL     SchedulerType = "ql"
 	Pctcp  SchedulerType = "pctcp"
+	Replay SchedulerType = "replay"
 )
 
 func NewScheduler(schedulerType SchedulerType) Scheduler {
@@ -56,6 +57,10 @@ func NewScheduler(schedulerType SchedulerType) Scheduler {
 		return new(RandomScheduler)
 	case QL:
 		return new(QLScheduler)
+	case PCTCP:
+		return new(PCTCP)
+	case Replay:
+		return new(ReplayScheduler)
 	default:
 		return new(RandomScheduler)
 	}
