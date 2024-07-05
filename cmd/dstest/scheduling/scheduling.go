@@ -24,6 +24,19 @@ const (
 	InjectFault
 )
 
+func (dt DecisionType) String() string {
+	switch dt {
+	case NoOp:
+		return "NoOp"
+	case SendMessage:
+		return "SendMessage"
+	case InjectFault:
+		return "InjectFault"
+	default:
+		return "Unknown"
+	}
+}
+
 type SchedulerDecision struct {
 	DecisionType DecisionType
 	Index        int
