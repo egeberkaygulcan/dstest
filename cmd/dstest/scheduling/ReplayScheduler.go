@@ -6,6 +6,7 @@ import (
 	"github.com/egeberkaygulcan/dstest/cmd/dstest/faults"
 	"github.com/egeberkaygulcan/dstest/cmd/dstest/network"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -31,18 +32,22 @@ func (s *ReplayScheduler) Init(config *config.Config) {
 	}
 
 	// check if file exists
-	actions, err := os.ReadFile(filename)
+	actions, err := os.ReadFile(filepath.Clean(filename))
 	if err != nil {
 		fmt.Printf("Error reading actions file: %s\n", err)
 		return
 	}
 
 	// read actions from file (one per line)
-	s.actions = strings.Split(string(actions), "\n")
+	s.actions = strings.Split(strings.TrimSpace(string(actions)), "\n")
 	s.index = 0
 
-	// print actions
-	fmt.Printf("Actions:\n%v\n", s.actions)
+	// print actions, one per line
+	for i, action := range s.actions {
+		fmt.Printf("ACTION %d: %s\n", i, action)
+	}
+
+	panic("at the disco")
 }
 
 func (s *ReplayScheduler) NextIteration() {}
@@ -51,20 +56,28 @@ func (s *ReplayScheduler) Shutdown()      {}
 
 // Returns a random index from available messages
 func (s *ReplayScheduler) Next(messages []*network.Message, faults []*faults.Fault, context faults.FaultContext) SchedulerDecision {
-	if s.index < len(s.actions) {
-		actionStr := s.actions[s.index]
-		fmt.Printf("Selecting action: %s\n", actionStr)
-		s.index++
-		return SchedulerDecision{
-			DecisionType: SendMessage,
-			Index:        0,
-		}
-	} else {
+	// if no more actions, return NoOp
+	if s.index >= len(s.actions) {
 		fmt.Printf("No more actions to schedule\n")
 		return SchedulerDecision{
 			DecisionType: NoOp,
 		}
+	}
 
+	actionStr := s.actions[s.index]
+	fmt.Printf("Selecting action: %s\n", actionStr)
+
+	// parse action
+	// check if action is available
+	s.index++
+	return SchedulerDecision{
+		DecisionType: SendMessage,
+		Index:        0,
+	}
+
+	// if not, return NoOp
+	return SchedulerDecision{
+		DecisionType: NoOp,
 	}
 }
 
