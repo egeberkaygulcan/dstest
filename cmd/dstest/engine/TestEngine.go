@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/egeberkaygulcan/dstest/cmd/dstest/faults"
 	"log"
@@ -15,10 +16,64 @@ import (
 	"github.com/egeberkaygulcan/dstest/cmd/dstest/scheduling"
 )
 
-type Action struct {
+type ActionType int
+
+const (
+	SendMessage ActionType = iota
+	InjectFault
+	ClientRequest
+)
+
+func (at ActionType) String() string {
+	switch at {
+	case SendMessage:
+		return "SendMessage"
+	case InjectFault:
+		return "InjectFault"
+	case ClientRequest:
+		return "ClientRequest"
+	default:
+		return "Unknown"
+	}
+}
+
+type Action interface {
+	GetType() ActionType
+}
+
+type DeliverMessageAction struct {
 	Sender   int
 	Receiver int
 	Name     string
+}
+
+// make sure DeliverMessageAction implements the Action interface
+var _ Action = (*DeliverMessageAction)(nil)
+
+func (dma *DeliverMessageAction) GetType() ActionType {
+	return SendMessage
+}
+
+type InjectFaultAction struct {
+	Fault faults.Fault
+}
+
+// make sure InjectFaultAction implements the Action interface
+var _ Action = (*InjectFaultAction)(nil)
+
+func (ifa *InjectFaultAction) GetType() ActionType {
+	return InjectFault
+}
+
+type ClientRequestAction struct {
+	Name string
+}
+
+// make sure ClientRequestAction implements the Action interface
+var _ Action = (*ClientRequestAction)(nil)
+
+func (cra *ClientRequestAction) GetType() ActionType {
+	return ClientRequest
 }
 
 // FIXME: Repetition of FaultManager interface to avoid cyclic import
@@ -127,20 +182,21 @@ func (te *TestEngine) Run() error {
 				sc := te.Scheduler.GetClientRequest()
 				if sc >= 0 {
 					te.ProcessManager.RunClient(sc)
-					schedule = append(schedule, Action{
-						Sender:   -1,
-						Receiver: -1,
-						Name:     fmt.Sprintf("ClientRequest_%d_%d", s, sc),
+					schedule = append(schedule, &ClientRequestAction{
+						Name: fmt.Sprintf("ClientRequest_%d_%d", s, sc),
 					})
 				}
 				// TODO - Get fault from scheduler
 				var faultContext faults.FaultContext = NewEngineFaultContext(te)
 				decision := te.Scheduler.Next(actions, te.FaultManager.GetFaults(), faultContext)
 
+				fmt.Printf("decision: %+v\n", decision)
+
 				if decision.DecisionType == scheduling.SendMessage {
 					action := decision.Index
+					fmt.Println("action: ", action)
 					te.NetworkManager.SendMessage(actions[action].MessageId)
-					schedule = append(schedule, Action{
+					schedule = append(schedule, &DeliverMessageAction{
 						Sender:   actions[action].Sender,
 						Receiver: actions[action].Receiver,
 						Name:     actions[action].Name,
@@ -155,7 +211,9 @@ func (te *TestEngine) Run() error {
 					if err != nil {
 						te.Log.Printf("Error applying fault: %s\n", err)
 					}
-					// TODO - Append fault to schedule
+					schedule = append(schedule, &InjectFaultAction{
+						Fault: *fault,
+					})
 				}
 
 				time.Sleep(te.SleepDuration)
@@ -169,14 +227,28 @@ func (te *TestEngine) Run() error {
 			wg.Wait()
 
 			te.Log.Println("Checking for bugs...")
-			if te.ProcessManager.BugCandidate {
+			if true { //te.ProcessManager.BugCandidate {
 				outputFile, err := os.OpenFile(filepath.Join(te.ProcessManager.Basedir, "schedule.log"), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 				if err != nil {
 					te.Log.Printf("Could not create schedule file.\n Err: %s\n", err)
 				}
 
 				for _, action := range schedule {
-					fmt.Fprintln(outputFile, action)
+					/*fmt.Fprintf(outputFile, "%+#v\n", struct {
+						ActionType ActionType
+						Action     *Action
+					}{
+						ActionType: action.GetType(),
+						Action:     &action,
+					})*/
+					actionJson, _ := json.Marshal(struct {
+						ActionType ActionType
+						Action     *Action
+					}{
+						ActionType: action.GetType(),
+						Action:     &action,
+					})
+					fmt.Fprintf(outputFile, "%s\n", (actionJson))
 				}
 				outputFile.Close()
 			}
