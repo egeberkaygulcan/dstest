@@ -50,29 +50,27 @@ func (s *ReplayScheduler) Init(config *config.Config) {
 
 	// convert each string into an action
 	for _, actionStr := range actionStrings {
-		fmt.Printf("Action: %s\n", actionStr)
+		//fmt.Printf("ActionStr: %s\n", actionStr)
 		var actionEntry UnparsedAction
 		err := json.Unmarshal([]byte(actionStr), &actionEntry)
 		if err != nil {
-			fmt.Printf("Error parsing action: %s\n", err)
+			fmt.Printf("Error unmarshalling action: %s\n", err)
 			continue
 		}
 
-		fmt.Printf("Action: %s\n", actionStr)
-		//action := actions.NewAction(actionEntry)
-		// parse action
-		// check if action is available
-		// if not, skip
-		// if available, append to s.actions
-		// if not, print error
+		parsedAction := actions.NewAction(actionEntry.ActionType, actionEntry.Action)
+		if parsedAction == nil {
+			fmt.Printf("Error parsing action\n")
+			continue
+		}
+
+		// print parsed action
+		//fmt.Printf("parsedAction: %s\n", parsedAction)
+
+		s.actions = append(s.actions, parsedAction)
 	}
 
 	s.index = 0
-
-	// print actions, one per line
-	for i, action := range s.actions {
-		fmt.Printf("ACTION %d: %s\n", i, action)
-	}
 
 	panic("at the disco")
 }

@@ -29,9 +29,9 @@ func NewAction(actionType ActionType, params map[string]interface{}) Action {
 	switch actionType {
 	case SendMessage:
 		return &DeliverMessageAction{
-			Sender:   params["sender"].(int),
-			Receiver: params["receiver"].(int),
-			Name:     params["name"].(string),
+			Sender:   int(params["Sender"].(float64)),
+			Receiver: int(params["Receiver"].(float64)),
+			Name:     params["Name"].(string),
 		}
 	case InjectFault:
 		return &InjectFaultAction{
@@ -39,7 +39,7 @@ func NewAction(actionType ActionType, params map[string]interface{}) Action {
 		}
 	case ClientRequest:
 		return &ClientRequestAction{
-			ClientId: params["clientId"].(int),
+			ClientId: int(params["ClientId"].(float64)),
 		}
 	default:
 		return nil
