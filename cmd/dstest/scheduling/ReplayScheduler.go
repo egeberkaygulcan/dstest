@@ -1,7 +1,9 @@
 package scheduling
 
 import (
+	"encoding/json"
 	"fmt"
+	"github.com/egeberkaygulcan/dstest/cmd/dstest/actions"
 	"github.com/egeberkaygulcan/dstest/cmd/dstest/config"
 	"github.com/egeberkaygulcan/dstest/cmd/dstest/faults"
 	"github.com/egeberkaygulcan/dstest/cmd/dstest/network"
@@ -13,7 +15,7 @@ import (
 type ReplayScheduler struct {
 	Scheduler
 	Config  *config.Config
-	actions []string
+	actions []actions.Action
 	index   int
 }
 
@@ -39,7 +41,26 @@ func (s *ReplayScheduler) Init(config *config.Config) {
 	}
 
 	// read actions from file (one per line)
-	s.actions = strings.Split(strings.TrimSpace(string(actions)), "\n")
+	actionStrings := strings.Split(strings.TrimSpace(string(actions)), "\n")
+
+	// convert each string into an action
+	for _, actionStr := range actionStrings {
+		actionEntry := []byte(actionStr)
+		err := json.Unmarshal(actionEntry, actionStr)
+		if err != nil {
+			fmt.Printf("Error parsing action: %s\n", err)
+			continue
+		}
+
+		fmt.Printf("Action: %s\n", actionStr)
+		//action := actions.NewAction(actionEntry)
+		// parse action
+		// check if action is available
+		// if not, skip
+		// if available, append to s.actions
+		// if not, print error
+	}
+
 	s.index = 0
 
 	// print actions, one per line
