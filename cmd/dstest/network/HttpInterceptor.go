@@ -25,7 +25,7 @@ type HttpInterceptor struct {
 	// WG       sync.WaitGroup
 }
 
-// Check if BaseInterceptor implements Interceptor interface
+// Check if HttpInterceptor implements Interceptor interface
 var _ Interceptor = (*HttpInterceptor)(nil)
 
 func (hi *HttpInterceptor) Init(id int, port int, nm *Manager) {
