@@ -122,9 +122,9 @@ func (te *TestEngine) Run() error {
 				if sc >= 0 {
 					te.ProcessManager.RunClient(sc)
 					schedule = append(schedule, Action{
-						Sender: -1,
+						Sender:   -1,
 						Receiver: -1,
-						Name: fmt.Sprintf("ClientRequest_%d_%d", s, sc),
+						Name:     fmt.Sprintf("ClientRequest_%d_%d", s, sc),
 					})
 				}
 				// TODO - Get fault from scheduler
@@ -163,7 +163,7 @@ func (te *TestEngine) Run() error {
 			wg.Wait()
 
 			te.Log.Println("Checking for bugs...")
-			if true { // te.ProcessManager.BugCandidate {
+			if te.ProcessManager.BugCandidate {
 				outputFile, err := os.OpenFile(filepath.Join(te.ProcessManager.Basedir, "schedule.log"), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 				if err != nil {
 					te.Log.Printf("Could not create schedule file.\n Err: %s\n", err)
