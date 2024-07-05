@@ -2,6 +2,10 @@
 
 This directory contains example configuration files for running dstest with different distributed systems.
 
+> [!IMPORTANT]
+> - Commands in this document are run from the root directory of the project.
+> - Make sure to build the docker image before running the tests.
+
 ## Apache Ratis
 
 Apache Ratis is a Java library that implements the Raft consensus algorithm.
