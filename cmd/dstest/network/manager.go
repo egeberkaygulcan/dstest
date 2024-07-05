@@ -11,16 +11,16 @@ import (
 )
 
 type SenderReceiverPair struct {
-	Sender int
+	Sender   int
 	Receiver int
 }
 
 type Event struct {
-	Prev *Event
-	Sender int
-	Receiver int
+	Prev      *Event
+	Sender    int
+	Receiver  int
 	MessageId uint64
-	Name string
+	Name      string
 }
 
 type Manager struct {
@@ -29,11 +29,11 @@ type Manager struct {
 	Router        *Router
 	Interceptors  []Interceptor
 	MessageQueues []*MessageQueue
-	Index atomic.Uint64
-	WaitGroup	  sync.WaitGroup
-	ReplicaIds []int
-	PortMap map[int]SenderReceiverPair
-	MessageType MessageType
+	Index         atomic.Uint64
+	WaitGroup     sync.WaitGroup
+	ReplicaIds    []int
+	PortMap       map[int]SenderReceiverPair
+	MessageType   MessageType
 	// VectorClocks map[int]map[int]int
 	ChainClocks [][]Event
 }
@@ -142,9 +142,9 @@ func max(x, y int) int {
 
 func (nm *Manager) UpdateChainClocks(sender, receiver int, messageId uint64, name string) {
 	for i, chain := range nm.ChainClocks {
-		if chain[len(chain)-1].Receiver == sender  {
-				nm.ChainClocks[i] = append(nm.ChainClocks[i], Event{&chain[len(chain)-1], sender, receiver, messageId, name})
-				return
+		if chain[len(chain)-1].Receiver == sender {
+			nm.ChainClocks[i] = append(nm.ChainClocks[i], Event{&chain[len(chain)-1], sender, receiver, messageId, name})
+			return
 		}
 	}
 
