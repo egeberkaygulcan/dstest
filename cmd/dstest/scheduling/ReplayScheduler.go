@@ -118,6 +118,7 @@ func (s *ReplayScheduler) Next(messages []*network.Message, faults []*faults.Fau
 			fmt.Printf("Checking message: %+v\n", message)
 			if message.Sender == sender &&
 				message.Receiver == receiver && message.Name == name {
+				fmt.Printf("🎉 Found message! %+v\n", message)
 				s.index++
 				return SchedulerDecision{
 					DecisionType: SendMessage,

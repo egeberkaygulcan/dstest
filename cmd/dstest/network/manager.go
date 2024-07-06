@@ -45,7 +45,7 @@ func (nm *Manager) Init(config *config.Config, replicaIds []int) error {
 	nm.Config = config
 	nm.MessageType = MessageType(config.NetworkConfig.MessageType)
 	nm.Router = new(Router)
-	nm.Interceptors = make([]Interceptor, numReplicas * (numReplicas - 1))
+	nm.Interceptors = make([]Interceptor, numReplicas*(numReplicas-1))
 	nm.MessageQueues = make([]*MessageQueue, numReplicas)
 	nm.ReplicaIds = replicaIds
 	// nm.VectorClocks = make(map[int]map[int]int)
@@ -153,9 +153,10 @@ func (nm *Manager) UpdateChainClocks(sender, receiver int, messageId uint64, nam
 
 func (nm *Manager) SendMessage(messageId uint64) {
 	for _, mq := range nm.MessageQueues {
-		if mq.Peek() != nil {
-			if mq.Peek().MessageId == messageId {
-				message := mq.PopFront()
+		for e := mq.List.Front(); e != nil; e = e.Next() {
+			message := e.Value.(*Message)
+			if message.MessageId == messageId {
+				mq.Remove(message)
 				message.SendMessage()
 				// nm.updateVectorClocks(message.Sender, message.Receiver)
 			}
@@ -178,11 +179,17 @@ func (nm *Manager) GetActions() []*Message {
 	// actions = append(actions, delayMessage)
 
 	for _, mq := range nm.MessageQueues {
-		action := mq.Peek()
+		/*
+			action := mq.Peek()
 
-		if action != nil {
-			actions = append(actions, action)
+			if action != nil {
+				actions = append(actions, action)
+			}*/
+		// append all actions, without popping
+		for e := mq.List.Front(); e != nil; e = e.Next() {
+			actions = append(actions, e.Value.(*Message))
 		}
+
 	}
 
 	return actions
