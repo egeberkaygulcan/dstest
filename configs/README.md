@@ -17,7 +17,7 @@ This configuration references these [startup](../scripts/ratis_server.sh) and [c
 
 After building the docker image, one can run the test with the following command from the root directory of the project:
 ```shell
-docker run -v ./configs:/configs egeberkaygulcan/dstest run -c /configs/ratis.yml
+docker run --rm -v ./configs:/configs egeberkaygulcan/dstest run -c /configs/ratis.yml
 ```
 
 ## Apache ZooKeeper
@@ -32,7 +32,7 @@ This configuration references these [startup](../scripts/zk_server.sh) and [clea
 
 After building the docker image, one can run the test with the following command from the root directory of the project:
 ```shell
-docker run -v ./configs:/configs egeberkaygulcan/dstest run -c /configs/zookeeper.yml
+docker run --rm -v ./configs:/configs egeberkaygulcan/dstest run -c /configs/zookeeper.yml
 ```
 
 ## etcd
@@ -44,5 +44,5 @@ This configuration references these [startup](../scripts/etcd_server.sh) and [cl
 
 After building the docker image, one can run the test with the following command from the root directory of the project:
 ```shell
-docker run -v ./configs:/configs egeberkaygulcan/dstest run -c /configs/etcd.yml
+docker run --rm -v ./configs:/configs egeberkaygulcan/dstest run -c /configs/etcd.yml
 ```
