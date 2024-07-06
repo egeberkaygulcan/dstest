@@ -1,7 +1,7 @@
 TestConfig:
   Name: etcd-test
   Experiments: 1
-  Iterations: 10
+  Iterations: 5
   WaitDuration: 50 # Time duration to wait between execution steps in milliseconds
   StartupDuration: 1 # seconds
 SchedulerConfig: #TODO - Seperate the scheduler param
