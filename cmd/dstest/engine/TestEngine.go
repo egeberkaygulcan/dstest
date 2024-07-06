@@ -165,20 +165,13 @@ func (te *TestEngine) Run() error {
 			wg.Wait()
 
 			te.Log.Println("Checking for bugs...")
-			if true { //te.ProcessManager.BugCandidate {
+			if te.ProcessManager.BugCandidate {
 				outputFile, err := os.OpenFile(filepath.Join(te.ProcessManager.Basedir, "schedule.log"), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 				if err != nil {
 					te.Log.Printf("Could not create schedule file.\n Err: %s\n", err)
 				}
 
 				for _, action := range schedule {
-					/*fmt.Fprintf(outputFile, "%+#v\n", struct {
-						ActionType ActionType
-						Action     *Action
-					}{
-						ActionType: action.GetType(),
-						Action:     &action,
-					})*/
 					actionJson, _ := json.Marshal(struct {
 						ActionType actions.ActionType
 						Action     *actions.Action
