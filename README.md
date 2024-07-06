@@ -1,6 +1,11 @@
-# DSTest
+# DSTest: Generalized Concurrency Testing Tool for Distributed Systems
 
-DSTest is a Controlled Concurrency Testing Framework tool to test distributed systems without modifying the source code of the system under test.
+DSTest is a Controlled Concurrency Testing Framework tool to test distributed systems without modifying the source code of the system under test and is programming language independent.
+
+
+![dstest](https://github.com/egeberkaygulcan/dstest/assets/111654404/86f7ea1c-abb2-4e65-8212-2751fdab646f)
+
+
 
 ## Prerequisites
 
@@ -41,7 +46,7 @@ This section contains the general configuration for the test.
 
 ###### SchedulerConfig
 This section contains the configuration for the scheduler: which scheduler to use, and the parameters to pass to the scheduler.
-- `Type`: The name of the scheduler to use. Possible values are `Random`, `QL`, and `PCTCP`.
+- `Type`: The name of the scheduler to use. Possible values are `Random`, `QL`, and `PCT`.
 - `Steps`: The number of steps to run in the scheduler.
 - `ClientRequests`: The number of client requests to generate per experiment.
 - `Seed`: The seed to use for the random number generator.
@@ -70,9 +75,27 @@ This section contains the configuration on how to spawn the processes of the sys
 - `CleanScript`: The script to run to clean up the system under test.
 - `ReplicaParams`: A list of parameters to pass to the replica script; one for each replica.
 
-## Running the examples
+## Usage
 
 See the [configs](configs/README.md) directory for examples of how to run DSTest with different distributed systems and sample configurations.
+
+## Extensibility
+
+For any user who extends a new scheduler to the system, the following ```Scheduler``` interface needs to be implemented.
+
+```go
+type Scheduler interface {
+	Init(config *config.Config)
+	Reset()
+	Shutdown()
+	NextIteration()
+	GetClientRequest() int
+	Next([]*network.Message, []*faults.Fault, faults.FaultContext) SchedulerDecision
+	ApplyFault(*faults.Fault) error
+}
+```
+
+The interface requires two main functions for decision-making. When called, ```Next``` decides on the next node to be scheduled and the fault to be injected, if any. ```GetClientRequest``` chooses when and which client request is sent.
 
 ## License
 See [LICENSE](LICENSE.md).

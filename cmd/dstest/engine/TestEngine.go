@@ -62,9 +62,6 @@ func (te *TestEngine) Init(config *config.Config) error {
 	te.NetworkManager = new(network.Manager)
 	te.ProcessManager = new(process.ProcessManager)
 
-	if scheduling.SchedulerType(config.SchedulerConfig.Type) == scheduling.Pctcp {
-		config.SchedulerConfig.Params["network_manager"] = te.NetworkManager
-	}
 	// te.ProcessManager.Init(config, te.Iterations)
 	te.FaultManager = new(faults.FaultManager)
 

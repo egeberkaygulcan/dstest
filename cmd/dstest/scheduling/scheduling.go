@@ -2,6 +2,7 @@ package scheduling
 
 import (
 	"fmt"
+
 	"github.com/egeberkaygulcan/dstest/cmd/dstest/config"
 	"github.com/egeberkaygulcan/dstest/cmd/dstest/faults"
 	"github.com/egeberkaygulcan/dstest/cmd/dstest/network"
@@ -48,7 +49,7 @@ type SchedulerType string
 const (
 	Random SchedulerType = "random"
 	QL     SchedulerType = "ql"
-	Pctcp  SchedulerType = "pctcp"
+	Pct    SchedulerType = "pct"
 	Replay SchedulerType = "replay"
 )
 
@@ -59,7 +60,7 @@ func NewScheduler(schedulerType SchedulerType) (Scheduler, error) {
 	case QL:
 		return new(QLScheduler), nil
 	case Pctcp:
-		return new(PCTCP), nil
+		return new(PCT), nil
 	case Replay:
 		return new(ReplayScheduler), nil
 	default:
