@@ -59,7 +59,7 @@ func NewScheduler(schedulerType SchedulerType) (Scheduler, error) {
 		return new(RandomScheduler), nil
 	case QL:
 		return new(QLScheduler), nil
-	case Pctcp:
+	case Pct:
 		return new(PCT), nil
 	case Replay:
 		return new(ReplayScheduler), nil
