@@ -28,6 +28,13 @@ func NewFault(Name string, Params map[string]interface{}) (Fault, error) {
 func (fm *FaultManager) Init(config *config.Config) error {
 	fm.Faults.Init()
 
+	// Recover from possible panic, e.g. when list of faults is not specified in config file
+	defer func() {
+		if err := recover(); err != nil {
+			fmt.Println("panic occurred reading faults from config: ", err)
+		}
+	}()
+
 	// Add faults to the list
 	faults := config.FaultConfig.Faults
 

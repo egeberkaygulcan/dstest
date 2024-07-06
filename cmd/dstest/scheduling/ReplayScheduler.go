@@ -1,23 +1,31 @@
 package scheduling
 
 import (
+	"encoding/json"
 	"fmt"
+	"github.com/egeberkaygulcan/dstest/cmd/dstest/actions"
 	"github.com/egeberkaygulcan/dstest/cmd/dstest/config"
 	"github.com/egeberkaygulcan/dstest/cmd/dstest/faults"
 	"github.com/egeberkaygulcan/dstest/cmd/dstest/network"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
 type ReplayScheduler struct {
 	Scheduler
 	Config  *config.Config
-	actions []string
+	actions []actions.Action
 	index   int
 }
 
 // assert ReplayScheduler implements the Scheduler interface
 var _ Scheduler = &ReplayScheduler{}
+
+type UnparsedAction struct {
+	ActionType actions.ActionType
+	Action     map[string]interface{}
+}
 
 func (s *ReplayScheduler) Init(config *config.Config) {
 	s.Config = config
@@ -31,18 +39,38 @@ func (s *ReplayScheduler) Init(config *config.Config) {
 	}
 
 	// check if file exists
-	actions, err := os.ReadFile(filename)
+	scheduleActions, err := os.ReadFile(filepath.Clean(filename))
 	if err != nil {
 		fmt.Printf("Error reading actions file: %s\n", err)
 		return
 	}
 
 	// read actions from file (one per line)
-	s.actions = strings.Split(string(actions), "\n")
-	s.index = 0
+	actionStrings := strings.Split(strings.TrimSpace(string(scheduleActions)), "\n")
 
-	// print actions
-	fmt.Printf("Actions:\n%v\n", s.actions)
+	// convert each string into an action
+	for _, actionStr := range actionStrings {
+		//fmt.Printf("ActionStr: %s\n", actionStr)
+		var actionEntry UnparsedAction
+		err := json.Unmarshal([]byte(actionStr), &actionEntry)
+		if err != nil {
+			fmt.Printf("Error unmarshalling action: %s\n", err)
+			continue
+		}
+
+		parsedAction := actions.NewAction(actionEntry.ActionType, actionEntry.Action)
+		if parsedAction == nil {
+			fmt.Printf("Error parsing action\n")
+			continue
+		}
+
+		// print parsed action
+		//fmt.Printf("parsedAction: %s\n", parsedAction)
+
+		s.actions = append(s.actions, parsedAction)
+	}
+
+	s.index = 0
 }
 
 func (s *ReplayScheduler) NextIteration() {}
@@ -51,20 +79,74 @@ func (s *ReplayScheduler) Shutdown()      {}
 
 // Returns a random index from available messages
 func (s *ReplayScheduler) Next(messages []*network.Message, faults []*faults.Fault, context faults.FaultContext) SchedulerDecision {
-	if s.index < len(s.actions) {
-		actionStr := s.actions[s.index]
-		fmt.Printf("Selecting action: %s\n", actionStr)
-		s.index++
-		return SchedulerDecision{
-			DecisionType: SendMessage,
-			Index:        0,
-		}
-	} else {
+	// if no more actions, return NoOp
+	if s.index >= len(s.actions) {
 		fmt.Printf("No more actions to schedule\n")
 		return SchedulerDecision{
 			DecisionType: NoOp,
 		}
+	}
 
+	nextAction := s.actions[s.index]
+
+	// Next action is a client request
+	// FIXME: should this go into GetClientRequest?
+	if nextAction.GetType() == actions.ClientRequest {
+		// check if client requests are available
+		// FIXME: is this correct?!
+		if s.Config.SchedulerConfig.ClientRequests > 0 {
+			s.Config.SchedulerConfig.ClientRequests--
+			s.index++
+			return SchedulerDecision{
+				DecisionType: SendMessage,
+				Index:        0,
+			}
+		}
+		return SchedulerDecision{
+			DecisionType: NoOp,
+		}
+	}
+
+	fmt.Printf("\n\nNext action: %+v\n", nextAction)
+	// Next action is a message
+	if nextAction.GetType() == actions.SendMessage {
+		sender := nextAction.(*actions.DeliverMessageAction).Sender
+		receiver := nextAction.(*actions.DeliverMessageAction).Receiver
+		name := nextAction.(*actions.DeliverMessageAction).Name
+		// search for the action with same sender and receiver
+		for i, message := range messages {
+			fmt.Printf("Checking message: %+v\n", message)
+			if message.Sender == sender &&
+				message.Receiver == receiver && message.Name == name {
+				fmt.Printf("🎉 Found message! %+v\n", message)
+				s.index++
+				return SchedulerDecision{
+					DecisionType: SendMessage,
+					Index:        i,
+				}
+			}
+		}
+		fmt.Printf("Action not found in available messages: %+v\n", messages)
+		// if not found, return NoOp… maybe next time?
+		return SchedulerDecision{
+			DecisionType: NoOp,
+		}
+	}
+
+	actionStr := s.actions[s.index]
+	fmt.Printf("Selecting action: %s\n", actionStr)
+
+	// parse action
+	// check if action is available
+	s.index++
+	return SchedulerDecision{
+		DecisionType: SendMessage,
+		Index:        0,
+	}
+
+	// if not, return NoOp
+	return SchedulerDecision{
+		DecisionType: NoOp,
 	}
 }
 
