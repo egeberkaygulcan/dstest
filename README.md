@@ -25,7 +25,7 @@ This can take a few minutes, as it will download and install all the dependencie
 #### Running the image
 This will run the image with the default configuration for Apache Ratis.
 ```shell
-docker run egeberkaygulcan/dstest
+docker run --rm egeberkaygulcan/dstest
 ```
 
 ### Running from source
