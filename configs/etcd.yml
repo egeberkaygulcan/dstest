@@ -14,14 +14,14 @@ FaultConfig:
 NetworkConfig:
   BaseReplicaPort: 6000
   BaseInterceptorPort: 10000
-  Protocol: "http2c"
+  Protocol: http
   MessageType: GRPC
 ProcessConfig:
   NumReplicas: 3
   Timeout: 10
   OutputDir: output
   ReplicaScript: scripts/etcd_server.sh
-  ClientScripts: [ client.sh ]
+  ClientScripts: [ scripts/etcd_client.sh ]
   CleanScript: scripts/etcd_clean.sh
   ReplicaParams:
     - "6000 10001 10002 n0"
