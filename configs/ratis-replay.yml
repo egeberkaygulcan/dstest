@@ -1,7 +1,7 @@
 TestConfig:
   Name: ratis-replay
   Experiments: 1
-  Iterations: 10
+  Iterations: 1
   WaitDuration: 50 # Time duration to wait between execution steps in milliseconds
 SchedulerConfig:
   Type: "replay"
