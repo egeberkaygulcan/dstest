@@ -107,13 +107,17 @@ func (s *ReplayScheduler) Next(messages []*network.Message, faults []*faults.Fau
 		}
 	}
 
+	fmt.Printf("\n\nNext action: %+v\n", nextAction)
 	// Next action is a message
 	if nextAction.GetType() == actions.SendMessage {
+		sender := nextAction.(*actions.DeliverMessageAction).Sender
+		receiver := nextAction.(*actions.DeliverMessageAction).Receiver
+		name := nextAction.(*actions.DeliverMessageAction).Name
 		// search for the action with same sender and receiver
 		for i, message := range messages {
-			if message.Sender == nextAction.(*actions.DeliverMessageAction).Sender &&
-				message.Receiver == nextAction.(*actions.DeliverMessageAction).Receiver &&
-				message.Name == nextAction.(*actions.DeliverMessageAction).Name {
+			fmt.Printf("Checking message: %+v\n", message)
+			if message.Sender == sender &&
+				message.Receiver == receiver && message.Name == name {
 				s.index++
 				return SchedulerDecision{
 					DecisionType: SendMessage,
@@ -121,6 +125,7 @@ func (s *ReplayScheduler) Next(messages []*network.Message, faults []*faults.Fau
 				}
 			}
 		}
+		fmt.Printf("Action not found in available messages: %+v\n", messages)
 		// if not found, return NoOp… maybe next time?
 		return SchedulerDecision{
 			DecisionType: NoOp,
