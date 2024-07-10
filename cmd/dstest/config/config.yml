@@ -5,15 +5,12 @@ TestConfig:
   WaitDuration: 30
   StartupDuration: 1 # seconds
 SchedulerConfig:
-  Type: QL
+  Type: "random"
   Steps: 50
   ClientRequests: 2
   Seed: 42
   Params:
     client_request_probability: 0.01
-    Epsilon: 0.1
-    Gamma: 0.7
-    Alpha: 0.3
 NetworkConfig:
   BaseReplicaPort: 6000
   BaseInterceptorPort: 10000
