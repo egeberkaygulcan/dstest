@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -56,7 +57,12 @@ func (te *TestEngine) Init(config *config.Config) error {
 		te.ReplicaIds[i] = i
 	}
 
-	te.Scheduler = scheduling.NewScheduler(scheduling.SchedulerType(config.SchedulerConfig.Type))
+	scheduler, err := scheduling.NewScheduler(scheduling.SchedulerType(strings.ToLower(config.SchedulerConfig.Type)))
+	if err != nil {
+		return fmt.Errorf("Error initializing Scheduler: %s", err.Error())
+	}
+
+	te.Scheduler = scheduler
 	te.NetworkManager = new(network.Manager)
 	te.ProcessManager = new(process.ProcessManager)
 

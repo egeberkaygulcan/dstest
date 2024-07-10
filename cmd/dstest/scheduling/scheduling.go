@@ -1,6 +1,7 @@
 package scheduling
 
 import (
+	"fmt"
 	"github.com/egeberkaygulcan/dstest/cmd/dstest/config"
 	"github.com/egeberkaygulcan/dstest/cmd/dstest/faults"
 	"github.com/egeberkaygulcan/dstest/cmd/dstest/network"
@@ -47,21 +48,21 @@ type SchedulerType string
 const (
 	Random SchedulerType = "random"
 	QL     SchedulerType = "ql"
-	Pct  SchedulerType = "pct"
+	Pct    SchedulerType = "pct"
 	Replay SchedulerType = "replay"
 )
 
-func NewScheduler(schedulerType SchedulerType) Scheduler {
+func NewScheduler(schedulerType SchedulerType) (Scheduler, error) {
 	switch schedulerType {
 	case Random:
-		return new(RandomScheduler)
+		return new(RandomScheduler), nil
 	case QL:
-		return new(QLScheduler)
+		return new(QLScheduler), nil
 	case Pct:
-		return new(PCT)
+		return new(PCT), nil
 	case Replay:
-		return new(ReplayScheduler)
+		return new(ReplayScheduler), nil
 	default:
-		return new(RandomScheduler)
+		return nil, fmt.Errorf("unknown scheduler type: %s", schedulerType)
 	}
 }
