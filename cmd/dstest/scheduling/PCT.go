@@ -72,11 +72,13 @@ func (s *PCT) NextIteration() {
 	s.RequestQuota = s.Config.SchedulerConfig.ClientRequests
 	s.NumPriorityChange = 0
 	s.Step = 0
+	s.PriorityChangePoints = make([]int, 0)
+	s.InitialPriorities = make([]int, 0)
 	for i := 0; i < s.Depth; i++ {
-		s.PriorityChangePoints[i] = s.distinctRandomInteger(s.Config.SchedulerConfig.Steps, s.PriorityChangePoints)
+		s.PriorityChangePoints = append(s.PriorityChangePoints, s.distinctRandomInteger(s.Config.SchedulerConfig.Steps, s.PriorityChangePoints))
 	}
 	for i := 0; i < s.Config.ProcessConfig.NumReplicas; i++ {
-		s.InitialPriorities[i] = s.distinctRandomInteger(s.Config.ProcessConfig.NumReplicas, s.InitialPriorities)
+		s.InitialPriorities = append(s.InitialPriorities, s.distinctRandomInteger(s.Config.ProcessConfig.NumReplicas, s.InitialPriorities))
 	}
 }
 
