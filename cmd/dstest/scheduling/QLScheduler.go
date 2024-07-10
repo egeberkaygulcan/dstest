@@ -58,8 +58,7 @@ func (s *QLScheduler) Init(config *config.Config) {
 		Base: agentv1.NewBase("Q"),
 	}
 
-	// print config
-	fmt.Println("QLScheduler config:", hyperparameters)
+	fmt.Printf("QLScheduler: Epsilon: %f, Gamma: %f, Alpha: %f\n", Epsilon, Gamma, Alpha)
 
 	s.agent = ql.NewAgent(hyperparameters, nil)
 }
