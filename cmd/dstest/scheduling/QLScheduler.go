@@ -18,20 +18,50 @@ type QLScheduler struct {
 	agent *ql.Agent
 }
 
+type QLSchedulerConfig struct {
+	client_request_probability float64
+	Epsilon                    float64
+	Gamma                      float64
+	Alpha                      float64
+}
+
 // assert QLScheduler implements the Scheduler interface
 var _ Scheduler = &QLScheduler{}
 
-var DefaultQLSchedulerConfig = &ql.AgentConfig{
-	Hyperparameters: &ql.Hyperparameters{
-		Epsilon: common.NewConstantSchedule(0.1),
-		Gamma:   0.7,
-		Alpha:   0.3,
-	},
-	Base: agentv1.NewBase("Q"),
-}
+var DefaultAlpha float32 = 0.3
+var DefaultGamma float32 = 0.7
+var DefaultEpsilon float32 = 0.1
 
 func (s *QLScheduler) Init(config *config.Config) {
-	s.agent = ql.NewAgent(DefaultQLSchedulerConfig, nil)
+
+	Epsilon := DefaultEpsilon
+	if config.SchedulerConfig.Params["Epsilon"] != nil {
+		Epsilon = config.SchedulerConfig.Params["Epsilon"].(float32)
+	}
+
+	Gamma := DefaultGamma
+	if config.SchedulerConfig.Params["Gamma"] != nil {
+		Gamma = config.SchedulerConfig.Params["Gamma"].(float32)
+	}
+
+	Alpha := DefaultAlpha
+	if config.SchedulerConfig.Params["Alpha"] != nil {
+		Alpha = config.SchedulerConfig.Params["Alpha"].(float32)
+	}
+
+	hyperparameters := &ql.AgentConfig{
+		Hyperparameters: &ql.Hyperparameters{
+			Epsilon: common.NewConstantSchedule(Epsilon),
+			Gamma:   Gamma,
+			Alpha:   Alpha,
+		},
+		Base: agentv1.NewBase("Q"),
+	}
+
+	// print config
+	fmt.Println("QLScheduler config:", hyperparameters)
+
+	s.agent = ql.NewAgent(hyperparameters, nil)
 }
 
 func (s *QLScheduler) Reset() {
