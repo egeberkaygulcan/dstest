@@ -99,6 +99,15 @@ func StateHash(messages []*network.Message) uint32 {
 
 // Returns a random index from available messages
 func (s *QLScheduler) Next(messages []*network.Message, faults []*faults.Fault, context faults.FaultContext) SchedulerDecision {
+	// TODO: select faults
+
+	// if there are no messages and faults, return a NoOp
+	if len(messages) == 0 {
+		return SchedulerDecision{
+			DecisionType: NoOp,
+		}
+	}
+
 	// visualize the agent ??
 	s.agent.Visualize()
 
