@@ -11,27 +11,66 @@ import (
 	"github.com/egeberkaygulcan/dstest/cmd/dstest/scheduling/ql"
 	"github.com/segmentio/fasthash/fnv1a"
 	"gorgonia.org/tensor"
+	"math/rand"
 )
 
 type QLScheduler struct {
 	Scheduler
-	agent *ql.Agent
+	RequestQuota             int
+	NumClientTypes           int
+	agent                    *ql.Agent
+	Rand                     *rand.Rand
+	ClientRequestProbability float64
+}
+
+type QLSchedulerConfig struct {
+	client_request_probability float64
+	RequestQuota               int
+	Epsilon                    float64
+	Gamma                      float64
+	Alpha                      float64
 }
 
 // assert QLScheduler implements the Scheduler interface
 var _ Scheduler = &QLScheduler{}
 
-var DefaultQLSchedulerConfig = &ql.AgentConfig{
-	Hyperparameters: &ql.Hyperparameters{
-		Epsilon: common.NewConstantSchedule(0.1),
-		Gamma:   0.7,
-		Alpha:   0.3,
-	},
-	Base: agentv1.NewBase("Q"),
-}
+var DefaultAlpha float32 = 0.3
+var DefaultGamma float32 = 0.7
+var DefaultEpsilon float32 = 0.1
 
 func (s *QLScheduler) Init(config *config.Config) {
-	s.agent = ql.NewAgent(DefaultQLSchedulerConfig, nil)
+	s.Rand = rand.New(rand.NewSource(int64(config.SchedulerConfig.Seed)))
+	s.RequestQuota = config.SchedulerConfig.ClientRequests
+	s.NumClientTypes = len(config.ProcessConfig.ClientScripts)
+	s.ClientRequestProbability = config.SchedulerConfig.Params["client_request_probability"].(float64)
+
+	Epsilon := DefaultEpsilon
+	if config.SchedulerConfig.Params["Epsilon"] != nil {
+		Epsilon = config.SchedulerConfig.Params["Epsilon"].(float32)
+	}
+
+	Gamma := DefaultGamma
+	if config.SchedulerConfig.Params["Gamma"] != nil {
+		Gamma = config.SchedulerConfig.Params["Gamma"].(float32)
+	}
+
+	Alpha := DefaultAlpha
+	if config.SchedulerConfig.Params["Alpha"] != nil {
+		Alpha = config.SchedulerConfig.Params["Alpha"].(float32)
+	}
+
+	hyperparameters := &ql.AgentConfig{
+		Hyperparameters: &ql.Hyperparameters{
+			Epsilon: common.NewConstantSchedule(Epsilon),
+			Gamma:   Gamma,
+			Alpha:   Alpha,
+		},
+		Base: agentv1.NewBase("Q"),
+	}
+
+	fmt.Printf("QLScheduler: Epsilon: %f, Gamma: %f, Alpha: %f\n", Epsilon, Gamma, Alpha)
+
+	s.agent = ql.NewAgent(hyperparameters, nil)
 }
 
 func (s *QLScheduler) Reset() {
@@ -60,6 +99,15 @@ func StateHash(messages []*network.Message) uint32 {
 
 // Returns a random index from available messages
 func (s *QLScheduler) Next(messages []*network.Message, faults []*faults.Fault, context faults.FaultContext) SchedulerDecision {
+	// TODO: select faults
+
+	// if there are no messages and faults, return a NoOp
+	if len(messages) == 0 {
+		return SchedulerDecision{
+			DecisionType: NoOp,
+		}
+	}
+
 	// visualize the agent ??
 	s.agent.Visualize()
 
@@ -86,4 +134,15 @@ func (s *QLScheduler) Next(messages []*network.Message, faults []*faults.Fault, 
 		DecisionType: SendMessage,
 		Index:        action,
 	}
+}
+
+func (s *QLScheduler) GetClientRequest() int {
+	if s.RequestQuota > 0 {
+		r := s.Rand.Float64()
+		if r <= s.ClientRequestProbability || s.ClientRequestProbability == 1.0 {
+			s.RequestQuota--
+			return s.Rand.Intn(s.NumClientTypes)
+		}
+	}
+	return -1
 }

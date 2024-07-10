@@ -9,7 +9,8 @@ SchedulerConfig:
   Steps: 50
   ClientRequests: 2
   Seed: 42
-  Params: {"client_request_probability": 0.01}
+  Params:
+    client_request_probability: 0.01
 NetworkConfig:
   BaseReplicaPort: 6000
   BaseInterceptorPort: 10000
