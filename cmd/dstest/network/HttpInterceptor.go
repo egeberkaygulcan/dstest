@@ -52,7 +52,7 @@ func (hi *HttpInterceptor) Run() error {
 			default:
 				if hi.Listener != nil {
 					conn, err := hi.Listener.Accept()
-					hi.Log.Println("Accepting new connection")
+					// hi.Log.Println("Accepting new connection")
 					if err != nil {
 						if errors.Is(err, io.EOF) { // errors.Is(err, net.ErrClosed)
 							hi.Log.Printf("Error while accepting TCP connection: %s\n", err)
@@ -89,6 +89,7 @@ func (hi *HttpInterceptor) handleConn(conn *net.TCPConn) {
 	req, err := http.ReadRequest(bufio.NewReader(bytes.NewBuffer(payload)))
 	if err != nil {
 		hi.Log.Printf("Error while creating new read request: %s\n", err)
+		return
 	}
 
 	if req.ProtoMajor >= 2 {
