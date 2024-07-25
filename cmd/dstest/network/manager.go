@@ -34,7 +34,7 @@ type Manager struct {
 	ReplicaIds    []int
 	PortMap       map[int]SenderReceiverPair
 	MessageType   MessageType
-	// VectorClocks map[int]map[int]int
+	VectorClocks map[int]map[int]int
 	ChainClocks [][]Event
 }
 
@@ -48,7 +48,7 @@ func (nm *Manager) Init(config *config.Config, replicaIds []int) error {
 	nm.Interceptors = make([]Interceptor, numReplicas * (numReplicas - 1))
 	nm.MessageQueues = make([]*MessageQueue, numReplicas)
 	nm.ReplicaIds = replicaIds
-	// nm.VectorClocks = make(map[int]map[int]int)
+	nm.VectorClocks = make(map[int]map[int]int)
 	nm.ChainClocks = make([][]Event, 0)
 	nm.Index.Store(0)
 
@@ -126,19 +126,39 @@ func max(x, y int) int {
 	return y
 }
 
-// func (nm *Manager) updateVectorClocks(sender, receiver int) {
-// 	// Update sender clock
-// 	nm.VectorClocks[sender][sender]++
+func (nm *Manager) updateVectorClocks(sender, receiver int) {
 
-// 	// Update receiver clock
-// 	for _, id := range nm.ReplicaIds {
-// 		if id != receiver {
-// 			nm.VectorClocks[receiver][id] = max(nm.VectorClocks[receiver][id], nm.VectorClocks[sender][id])
-// 		} else {
-// 			nm.VectorClocks[receiver][receiver]++
-// 		}
-// 	}
-// }
+	 //initialize inner maps 
+	if nm.VectorClocks[sender] == nil {
+		nm.VectorClocks[sender] = make(map[int]int)
+	}
+	
+	if nm.VectorClocks[receiver] == nil {
+		nm.VectorClocks[receiver] = make(map[int]int)
+	}
+
+	// initialize the entries 
+	if _, exists := nm.VectorClocks[sender][sender]; !exists {
+		nm.VectorClocks[sender][sender] = 0
+	}
+
+	if _, exists := nm.VectorClocks[receiver][receiver]; !exists {
+		nm.VectorClocks[receiver][receiver] = 0
+	}
+
+	 
+ 	// Update sender clock
+ 	nm.VectorClocks[sender][sender]++
+
+ 	// Update receiver clock
+ 	for _, id := range nm.ReplicaIds {
+ 		if id != receiver {
+ 			nm.VectorClocks[receiver][id] = max(nm.VectorClocks[receiver][id], nm.VectorClocks[sender][id])
+ 		} else {
+ 			nm.VectorClocks[receiver][receiver]++
+ 		}
+ 	}
+ }
 
 func (nm *Manager) UpdateChainClocks(sender, receiver int, messageId uint64, name string) {
 	for i, chain := range nm.ChainClocks {
@@ -158,7 +178,7 @@ func (nm *Manager) SendMessage(messageId uint64) {
 			if mq.Peek().MessageId == messageId {
 				message := mq.PopFront()
 				message.SendMessage()
-				// nm.updateVectorClocks(message.Sender, message.Receiver)
+				nm.updateVectorClocks(message.Sender, message.Receiver)
 			}
 		}
 	}
