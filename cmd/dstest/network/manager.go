@@ -178,7 +178,7 @@ func (nm *Manager) SendMessage(messageId uint64) {
 			if mq.Peek().MessageId == messageId {
 				message := mq.PopFront()
 				message.SendMessage()
-				// nm.updateVectorClocks(message.Sender, message.Receiver)
+				nm.updateVectorClocks(message.Sender, message.Receiver)
 			}
 		}
 	}
