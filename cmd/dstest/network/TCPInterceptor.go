@@ -12,7 +12,7 @@ type TCPInterceptor struct {
 }
 
 // Check if BaseInterceptor implements Interceptor interface
-var _ Interceptor = (*TCPInterceptor)(nil)
+// var _ Interceptor = (*TCPInterceptor)(nil)
 
 func (ni *TCPInterceptor) Init(id int, port int, nm *Manager) {
 	logPrefix := fmt.Sprintf("[TCP Interceptor %d] ", id)

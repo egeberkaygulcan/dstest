@@ -2,7 +2,8 @@ TestConfig:
   Name: zookeeper-test
   Experiments: 1
   Iterations: 1
-  WaitDuration: 50 # Time duration to wait between execution steps in milliseconds
+  WaitDuration: 30 # Time duration to wait between execution steps in milliseconds
+  StartupDuration: 1
 SchedulerConfig:
   Type: "random"
   Steps: 10

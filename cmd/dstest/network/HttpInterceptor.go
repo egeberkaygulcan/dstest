@@ -44,31 +44,23 @@ func (hi *HttpInterceptor) Run() error {
 		return err
 	}
 
-	go func(ctx context.Context) {
+	go func() {
 		for {
-			select {
-			case <-ctx.Done():
-				return
-			default:
-				if hi.Listener != nil {
-					conn, err := hi.Listener.Accept()
-					// hi.Log.Println("Accepting new connection")
-					if err != nil {
-						if errors.Is(err, io.EOF) { // errors.Is(err, net.ErrClosed)
-							hi.Log.Printf("Error while accepting TCP connection: %s\n", err)
-						}
-						continue
+			if hi.Listener != nil {
+				conn, err := hi.Listener.Accept()
+				// hi.Log.Println("Accepting new connection")
+				if err != nil {
+					if errors.Is(err, io.EOF) {//|| errors.Is(err, net.ErrClosed) {
+						hi.Log.Printf("Error while accepting TCP connection: %s\n", err)
 					}
-
-					// hi.WG.Add(1)
-					go func() {
-						hi.handleConn(conn.(*net.TCPConn))
-						// hi.WG.Done()
-					}()
+					continue
 				}
+
+				go hi.handleConn(conn.(*net.TCPConn))
+				
 			}
 		}
-	}(hi.Ctx)
+	}()
 
 	return nil
 }
@@ -77,33 +69,33 @@ func (hi *HttpInterceptor) handleConn(conn *net.TCPConn) {
 	defer func() {
 		_ = conn.Close()
 	}()
+	var err error
+	const preface = "PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n"
+
 
 	buf := make([]byte, 4096)
 	n, err := conn.Read(buf)
-
 	if err != nil {
-		hi.Log.Printf("Error while reading from connection: %s\n", err)
+		hi.Log.Println("Error while reading payload: ", err)
 	}
 
+	b := buf[:len(preface)]
 	payload := buf[:n]
-	req, err := http.ReadRequest(bufio.NewReader(bytes.NewBuffer(payload)))
-	if err != nil {
-		hi.Log.Printf("Error while creating new read request: %s\n", err)
-		return
-	}
 
-	if req.ProtoMajor >= 2 {
-		// hi.Log.Println("Handling http2")
+	if string(b) == preface || hi.NetworkManager.Config.NetworkConfig.MessageType == string(GRPC) {
 		err = hi.handleHttp2(bytes.NewBuffer(payload), conn)
 		if err != nil {
-			hi.Log.Printf("Error while handling HTTP2: %s\n", err)
+			hi.Log.Println("Error while handling http2: ", err)
 		}
-		hi.Log.Println("Handled http2")
 	} else {
-		err = hi.handleHttpReq(req, conn)
+		req, err := http.ReadRequest(bufio.NewReader(bytes.NewBuffer(payload)))
 		if err != nil {
-			hi.Log.Printf("Error while handling HTTP: %s\n", err)
+			hi.Log.Printf("Error while creating new read request: %s\n", err)
+			return
 		}
+
+		err = hi.handleHttpReq(req, conn)
+		hi.Log.Println("Error while handling http: ", err)
 	}
 }
 
@@ -130,7 +122,6 @@ func (hi *HttpInterceptor) handleHttp2(initial io.Reader, conn net.Conn) error {
 	reader := io.TeeReader(conn, dataBuffer)
 
 	f := http2.NewFramer(conn, conn)
-
 	err := f.WriteSettings()
 	if err != nil {
 		hi.Log.Printf("Error while writing HTTP2 settings: %s\n", err)

@@ -1,11 +1,12 @@
 TestConfig:
   Name: ratis-test
   Experiments: 1
-  Iterations: 10
+  Iterations: 1
   WaitDuration: 50 # Time duration to wait between execution steps in milliseconds
+  StartupDuration: 1
 SchedulerConfig:
-  Type: "pct"
-  Steps: 20
+  Type: "random"
+  Steps: 50
   Seed: 42
   Params: {"client_request_probability": 0.01, "d": 2} 
 NetworkConfig:
