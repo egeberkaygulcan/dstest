@@ -4,7 +4,7 @@ import (
 	"math/rand"
 
 	"github.com/egeberkaygulcan/dstest/cmd/dstest/faults"
-
+	"sort"
 	"github.com/egeberkaygulcan/dstest/cmd/dstest/config"
 	"github.com/egeberkaygulcan/dstest/cmd/dstest/network"
 )
@@ -20,7 +20,8 @@ type PCT struct {
 	Depth                    int
 	InitialPriorities        []int
 	PriorityChangePoints     []int
-	NumPriorityChange        int
+	NumPriorityChange        int //this is used to iterate through the InitialPriorities.
+	NumPriorityChanged       int //this is used to iterate thtrough the priority change points.
 	Step                     int
 }
 
@@ -35,12 +36,16 @@ func (s *PCT) Init(config *config.Config) {
 	s.ClientRequestProbability = config.SchedulerConfig.Params["client_request_probability"].(float64)
 	s.Depth = config.SchedulerConfig.Params["d"].(int)
 	s.NumPriorityChange = 0
+	s.NumPriorityChanged = 0
 	s.Step = 0
 	s.PriorityChangePoints = make([]int, 0)
 	s.InitialPriorities = make([]int, 0)
-	for i := 0; i < s.Depth; i++ {
+	for i := 1; i < s.Depth; i++ { 
 		s.PriorityChangePoints = append(s.PriorityChangePoints, s.distinctRandomInteger(s.Config.SchedulerConfig.Steps, s.PriorityChangePoints))
 	}
+	//PriorityChangePoints is iterated and compared to the current step number (increasing sequence) - so the list should be sorted.
+	sort.Ints(s.PriorityChangePoints)
+
 	for i := 0; i < s.Config.ProcessConfig.NumReplicas; i++ {
 		s.InitialPriorities = append(s.InitialPriorities, s.distinctRandomInteger(s.Config.ProcessConfig.NumReplicas, s.InitialPriorities))
 	}
@@ -71,12 +76,15 @@ func contains(i int, s []int) bool {
 func (s *PCT) NextIteration() {
 	s.RequestQuota = s.Config.SchedulerConfig.ClientRequests
 	s.NumPriorityChange = 0
+	s.NumPriorityChanged = 0
 	s.Step = 0
 	s.PriorityChangePoints = make([]int, 0)
 	s.InitialPriorities = make([]int, 0)
-	for i := 0; i < s.Depth; i++ {
+	for i := 1; i < s.Depth; i++ { 
 		s.PriorityChangePoints = append(s.PriorityChangePoints, s.distinctRandomInteger(s.Config.SchedulerConfig.Steps, s.PriorityChangePoints))
 	}
+	sort.Ints(s.PriorityChangePoints)
+
 	for i := 0; i < s.Config.ProcessConfig.NumReplicas; i++ {
 		s.InitialPriorities = append(s.InitialPriorities, s.distinctRandomInteger(s.Config.ProcessConfig.NumReplicas, s.InitialPriorities))
 	}
@@ -92,9 +100,10 @@ func (s *PCT) Shutdown() {
 
 // Returns a random index from available messages
 func (s *PCT) Next(messages []*network.Message, faults []*faults.Fault, context faults.FaultContext) SchedulerDecision {
-	if s.NumPriorityChange < s.Depth {
-		if s.Step == s.PriorityChangePoints[s.NumPriorityChange] {
-			s.NumPriorityChange++
+	if s.NumPriorityChanged < (s.Depth-1) { 
+		if s.Step == s.PriorityChangePoints[s.NumPriorityChanged] {
+			s.NumPriorityChanged++
+			s.NumPriorityChange  =  (s.NumPriorityChange +1 )  % ( s.Config.ProcessConfig.NumReplicas -1 )
 		}
 	}
 
@@ -108,6 +117,7 @@ func (s *PCT) Next(messages []*network.Message, faults []*faults.Fault, context 
 		}
 
 		if decision < 0 {
+			//s.Step = s.Step - 1 //if step is not decremented, the step number does not match with the step number the test engine counts.
 			return SchedulerDecision{
 				DecisionType: NoOp,
 			}
